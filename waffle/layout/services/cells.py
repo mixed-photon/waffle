@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from waffle.contracts.foundation.diagnostics import Diagnostic, Severity
@@ -21,6 +22,43 @@ class QualifiedPort:
 
     path: str
     port: Port
+
+
+def find_port(cells: Mapping[str, Cell], name: str, path: str) -> Port | None:
+    """Find one port in a validated cell library without expanding the hierarchy.
+
+    `name` is the starting cell. The port is returned in that cell's frame.
+    """
+    parts = path.split("/")
+    cell = cells[name]
+    transform = Transform()
+    cursor = 0
+    end = len(parts) - 1
+    while cursor < end:
+        instance = next((entry for entry in cell.instances if entry.name == parts[cursor]), None)
+        if instance is None:
+            return None
+        cursor += 1
+        placement = instance.transform
+        array = instance.array
+        if array is not None:
+            if cursor + 2 > end:
+                return None
+            indices = parts[cursor : cursor + 2]
+            try:
+                row, column = map(int, indices)
+            except ValueError:
+                return None
+            if indices != [str(row), str(column)] or not (
+                0 <= row < array.rows and 0 <= column < array.columns
+            ):
+                return None
+            _, placement = instance.placement(column, row)
+            cursor += 2
+        cell = cells[instance.cell]
+        transform = transform.compose(placement)
+    port = next((port for port in cell.ports if port.name == parts[end]), None)
+    return port.transformed(transform) if port is not None else None
 
 
 def _transform_instance(instance: Instance, transform: Transform) -> Instance:

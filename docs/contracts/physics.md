@@ -1,7 +1,8 @@
 # Physical problems: layout and technology to physics
 
 Contracts: `waffle/contracts/physics/` (`problem`, `approximations`). Preparation:
-`waffle/simulation/common/` (`prepare_physical_problem`, `request`, `ports`, `fingerprint`).
+`waffle/simulation/common/` (`prepare_physical_problem`, `request`, `ports`, `fingerprint`,
+`material_geometry`).
 Effective-index reduction: `waffle/simulation/photonics/device_analysis/` (`slab`, `reduction`).
 The analysis request (excitations, observables, numerical settings) is MOD-011's; this layer
 stops at "what is simulated, where, with which boundaries and ports". Nothing here is
@@ -13,7 +14,7 @@ solver-specific: no grid, mesh, time step, or backend name.
 
 | Field | Meaning |
 |---|---|
-| `layout`, `top_cell` | exact `RevisionRef` of the source `Layout` and the flattened cell |
+| `layout`, `top_cell` | exact `RevisionRef` of the source `Layout` and the selected cell |
 | `technology`, `design` | exact `TechnologyRef`; optional resolved-design ref (as given in the request) |
 | `dbu_pm` | picometres per in-plane integer unit (the layout's) |
 | `description` | `Extrusion3D` or `Reduced2D`, tagged by `dimensionality` (`"3d"`/`"2d"`) |
@@ -30,6 +31,8 @@ drawn polygon extruded over a patterned level in that level's material; `sidewal
 is from the substrate plane, None is vertical, footprint at the bottom). `materials` are the
 technology's models, copied (only the ones used) so a worker needs no PDK. `domain`:
 `lo`/`hi` in dbu and `z_min_pm`/`z_max_pm`, plus per-face boundaries.
+Prisms retain their original footprints and base heights when the domain cuts
+across them. Use the domain to limit material queries.
 
 **2D (`Reduced2D`).** `background_index` everywhere in the rectangle, then `regions` painted in
 order (a later region wins where they overlap): one region per drawn layer, polygons in dbu,
@@ -51,7 +54,8 @@ extruded over the z span of the levels patterned by the port's layer, the wavegu
 the analysis chooses the larger mode-solving window). `orientation` (0 = +x, 90 = +y, ...)
 points out of the device: a wave leaving through the port travels along it; incident waves
 travel opposite. By default the ports of the prepared cell itself are included (paths without
-`/`); a request may select others.
+`/`). For an explicit 3D window, default ports must fit entirely inside the window.
+A request may select other ports by qualified path, including an array member.
 
 ## Approximations
 
@@ -113,12 +117,42 @@ the domain and farther from each in-plane face than that face's declared absorbe
 ## Preparation and request
 
 `prepare_physical_problem(layout, technology, request) -> Result[PhysicalProblem]`. The
-`PhysicalRequest` carries the problem `id`, `dimensionality`, `margins` (lateral on all sides
-of the patterned bounding box; vertical above and below the patterned levels), `reduction`
-(`EffectiveIndexSpec`: wavelength, polarization, mode order; required for 2D, forbidden for 3D),
-`boundaries` (default absorbing), optional `cell`, `ports`, `design`, `metadata`. The service
-validates the technology and layout, flattens, maps every used layer, then builds extrusions
-per level (partial etch is stacked levels; blanket levels are films; gaps are background).
+`PhysicalRequest` defines the problem ID, dimensionality, boundary conditions,
+and optional cell, ports, design, and metadata. Supply one of two domain specifications.
+
+- **Margins.** Extend the patterned geometry's bounding box laterally and the
+  patterned process levels vertically. The service flattens the selected cell
+  and prepares a 3D extrusion or a 2D problem with the requested effective-index reduction.
+- **Explicit 3D window.** A `PhysicalWindow` sets `lo` and `hi` in the selected
+  cell's dbu and the two vertical limits in integer picometres. The service
+  selects mask geometry through the hierarchy, maps its layers to the pinned
+  process stack, and keeps the original footprints and prism base heights.
+  Films are limited to the window's vertical interval. An empty mask selection
+  can still produce blanket films and background material. An explicitly
+  requested port must fit in the window, including its vertical span.
+
+The existing stack rules apply to both paths. Partial etches use stacked
+levels, blanket levels become films, and gaps take the background material.
+
+### Material inspection
+
+`waffle.simulation.common.material_geometry` exposes `material_at` and
+`material_section` for an `Extrusion3D` and the problem's `dbu_pm`. A section fixes x or y
+and returns material names at the requested positions and heights, in their
+supplied order. XY edges are included. The domain and every layer use half-open
+z intervals, including the lower face and excluding the upper face.
+
+The same inspection functions accept directly authored films and prisms with
+explicit material names and coordinates. Films override background in list
+order, then prisms override films and earlier prisms. Vertical prisms accept
+simple polygon footprints. Tapered prisms use an inward offset of a convex
+footprint, measured from the prism's original base height. Each footprint tapers
+independently. Merge mask outlines upstream if they represent one tapered feature.
+
+The `//validation/physical_geometry:via_trench_test` fixture checks a patterned
+via and a 45° trench at analytically known coordinates. It compares localized
+and full-layout material samples on two section axes, including a window that
+cuts through the trench and starts partway up its sidewall.
 
 ### Diagnostics
 
@@ -127,6 +161,8 @@ calls (their errors also prevent a problem):
 
 | Code | Severity | Meaning |
 |---|---|---|
+| `physics.domain.required` / `.conflicting` | error | supply exactly one domain specification |
+| `physics.window.unsupported` | error | explicit window on a 2D request |
 | `physics.reduction.required` | error | 2D request without a reduction specification |
 | `physics.reduction.unexpected` | error | 3D request with a reduction |
 | `physics.reduction.layers_not_nested` | error | 2D: patterned levels of drawn layers are not nested |
@@ -145,13 +181,13 @@ calls (their errors also prevent a problem):
 | `physics.grid.off_manufacturing` | warning | vertices or port centres off that grid, one per layer or port |
 | `physics.extrusion.thickness` | error | level thickness not positive |
 | `physics.extrusion.material_unknown` | error | level material, fill or background undefined |
-| `physics.domain.empty` | error | no geometry on a layer that patterns the stack |
-| `physics.port.unknown` | error | selected port path not in the flattened cell |
+| `physics.domain.empty` | error | a margin-based domain has no geometry on a patterned layer |
+| `physics.port.unknown` | error | selected port path not in the layout hierarchy |
 | `physics.port.layer_unpatterned` | error | port on a layer that patterns no level (including annotation layers) |
 | `physics.port.not_on_geometry` | error | centre is not on the end of the waveguide on its layer |
 | `physics.port.width_mismatch` | error | port width differs from the cross-section there |
 | `physics.port.orientation` | error | port points into the geometry |
-| `physics.port.outside_domain` | error | port segment not inside the domain |
+| `physics.port.outside_domain` | error | port segment or vertical span outside the requested domain |
 | `physics.port.in_absorber` | error | port nearer a face than its declared absorber thickness |
 
 ## Physical fingerprint
@@ -160,7 +196,6 @@ calls (their errors also prevent a problem):
 `dbu_pm`, `description` (domain, boundaries, materials without `source`, films, prisms,
 regions, indices, ports with paths) and `approximations`. It excludes `id`, `metadata`,
 `schema_version`, `layout`, `technology`, `design`, `top_cell`, and `Material.source`. So a
-technology revision that differs only in descriptive text, or a change outside the
-domain (the substrate below the window), changes the revision but not the fingerprint; any
-change to thicknesses, indices, mapping, geometry, margins, boundaries, ports, or the
-reduction settings changes both.
+technology revision that differs only in descriptive text changes the revision
+alone. A change outside the window can affect the fingerprint when the
+description retains it, such as the portion of a prism beyond a window edge.

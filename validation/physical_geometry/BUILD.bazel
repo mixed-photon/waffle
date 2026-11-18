@@ -1,0 +1,18 @@
+load("//tools:waffle.bzl", "waffle_py_test")
+
+_TEST_DEPS = [
+    "//waffle/contracts/foundation:identity",
+    "//waffle/contracts/foundation:records",
+    "//waffle/contracts/foundation:units",
+    "//waffle/contracts/geometry:grid",
+    "//waffle/contracts/geometry:shapes",
+    "//waffle/contracts/layout",
+    "//waffle/contracts/physics:problem",
+    "//waffle/contracts/technology:materials",
+    "//waffle/contracts/technology:revision",
+    "//waffle/simulation/common:material_geometry",
+    "//waffle/simulation/common:prepare",
+    "//waffle/simulation/common:request",
+]
+
+waffle_py_test(name = "via_trench_test", deps = _TEST_DEPS)

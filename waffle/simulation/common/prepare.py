@@ -1,19 +1,20 @@
 """Layout IR and technology to a `PhysicalProblem`.
 
-Pipeline: validate the request, the technology and the layout; flatten the cell; map every
-used layout layer through the technology; check the grid, the stack's extrusions and the
-ports; then describe the physics in 3D (`Extrusion3D`) or reduced to 2D (`Reduced2D` with an
-`EffectiveIndexReduction`). Any error returns no problem, with every diagnostic found.
+Pipeline: validate the request, the technology and the layout; select geometry from the
+cell or flatten it; map used layout layers through the technology; check the grid, stack
+and ports; then describe the physics in 3D (`Extrusion3D`) or reduced to 2D (`Reduced2D`
+with an `EffectiveIndexReduction`). Any error returns no problem.
 
 Diagnostics added here, besides the `technology.*`, `layout.*`, `geometry.*`, and `units.*`
 ones of the services it calls (an error never gets a problem; a warning does):
 
-Request: `physics.reduction.required`,
+Request: `physics.domain.required`, `physics.domain.conflicting`,
+`physics.window.unsupported`, `physics.reduction.required`,
 `physics.reduction.unexpected`, `physics.margin.negative`, `physics.margin.nonpositive`,
 `physics.margin.off_grid`, `physics.boundary.face_unsupported`,
 `physics.boundary.periodic_unpaired`, `physics.length.sub_picometre`.
 
-Layers (for layers the flattened cell uses): `physics.layer.unknown` (not in the technology),
+Layers (for layers the selected geometry uses): `physics.layer.unknown` (not in the technology),
 `physics.layer.ambiguous` (several technology entries match the name or GDS pair),
 `physics.layer.gds_mismatch` (layout and technology disagree on the pair),
 `physics.layer.unpatterned` (error: shapes on a drawing layer that patterns no level; shapes
@@ -70,10 +71,17 @@ from waffle.contracts.technology.revision import (
     TechnologyRevision,
 )
 from waffle.geometry.services.grid import pm_per_unit
+from waffle.layout.services.cells import find_port
 from waffle.layout.services.flatten import FlatCell, flatten
 from waffle.layout.services.validate import validate_layout
+from waffle.layout.services.window import LayoutWindow, extract_window
 from waffle.simulation.common.ports import check_port_geometry
-from waffle.simulation.common.request import EffectiveIndexSpec, PhysicalRequest
+from waffle.simulation.common.request import (
+    EffectiveIndexSpec,
+    Margins,
+    PhysicalRequest,
+    PhysicalWindow,
+)
 from waffle.simulation.photonics.device_analysis.reduction import Window, reduce_stack
 from waffle.technology.mapping import map_layer
 from waffle.technology.validate import validate_technology
@@ -89,9 +97,14 @@ class _Level:
 
 
 @dataclass(frozen=True)
-class _Request:
+class _Margins:
     lateral_dbu: int
     vertical_pm: int
+
+
+@dataclass(frozen=True)
+class _Request:
+    margins: _Margins | None
     wavelength_pm: int | None
     faces: dict[Face, BoundaryCondition]
 
@@ -153,15 +166,27 @@ def prepare_physical_problem(
     found.items.extend(layout_problems)
     parsed = _parse_request(request, layout, found)
     levels = _stack_levels(technology, found)
-    if has_errors(layout_problems):
+    if has_errors(layout_problems) or (request.margins is None and request.window is None):
         return Result(None, tuple(found.items))
-    flat_result = flatten(layout, request.cell)
-    if flat_result.value is None:
-        return Result(None, (*found.items, *flat_result.diagnostics))
-    flat = flat_result.value
-    selected = _select_ports(flat, request, found)
-    layer_levels = _map_layers(layout, technology, flat, selected, found)
-    drawn = {name: polys for name, polys in flat.polygons.items() if layer_levels.get(name)}
+    window = request.window
+    geometry_result = (
+        flatten(layout, request.cell)
+        if window is None
+        else extract_window(layout, BBox(window.lo, window.hi), request.cell)
+    )
+    if geometry_result.value is None:
+        return Result(None, (*found.items, *geometry_result.diagnostics))
+    geometry = geometry_result.value
+    selected = _select_ports(layout, geometry, request, found)
+    layer_levels = _map_layers(layout, technology, geometry.polygons, selected, found)
+    drawn = {name: polys for name, polys in geometry.polygons.items() if layer_levels.get(name)}
+    port_spans = (
+        _port_spans(levels, layer_levels)
+        if levels is not None and request.dimensionality == "3d"
+        else {}
+    )
+    if window is not None:
+        selected = _ports_in_window(selected, window, port_spans, request.ports is not None, found)
     _check_grid(layout, technology, drawn, selected, found)
     for path, port in selected:
         if port.layer in layer_levels and not layer_levels[port.layer]:
@@ -173,28 +198,41 @@ def prepare_physical_problem(
             )
         elif port.layer in layer_levels:
             found.items.extend(
-                check_port_geometry(path, port, flat.polygons[port.layer], subject=found.subject)
+                check_port_geometry(
+                    path, port, geometry.polygons.get(port.layer, ()), subject=found.subject
+                )
             )
-    box = BBox.of(p for polys in drawn.values() for poly in polys for p in poly.points)
-    if box is None:
-        found.add("physics.domain.empty", "no geometry on a layer that patterns the stack")
+    box = None
+    if window is None:
+        box = BBox.of(p for polys in drawn.values() for poly in polys for p in poly.points)
+        if box is None:
+            found.add("physics.domain.empty", "no geometry on a layer that patterns the stack")
     if request.dimensionality == "2d":
         _check_nested(layer_levels, drawn, found)
-    if parsed is None or levels is None or box is None:
+    if parsed is None or levels is None or (window is None and box is None):
         return Result(None, tuple(found.items))
 
-    patterned = {lv.name for name in drawn for lv in layer_levels[name]}
-    extent = [lv for lv in levels if lv.level.name in patterned]
+    if window is None:
+        assert box is not None and parsed.margins is not None
+        lateral, vertical = parsed.margins.lateral_dbu, parsed.margins.vertical_pm
+        patterned = {lv.name for name in drawn for lv in layer_levels[name]}
+        extent = [lv for lv in levels if lv.level.name in patterned]
+        window = PhysicalWindow(
+            lo=(box.lo[0] - lateral, box.lo[1] - lateral),
+            hi=(box.hi[0] + lateral, box.hi[1] + lateral),
+            z_min_pm=min(lv.z_min_pm for lv in extent) - vertical,
+            z_max_pm=max(lv.z_max_pm for lv in extent) + vertical,
+        )
     setup = _Setup(
         tech=technology,
         levels=levels,
         drawn=drawn,
         layer_levels=layer_levels,
         ports=tuple(selected),
-        lo=(box.lo[0] - parsed.lateral_dbu, box.lo[1] - parsed.lateral_dbu),
-        hi=(box.hi[0] + parsed.lateral_dbu, box.hi[1] + parsed.lateral_dbu),
-        z_low=min(lv.z_min_pm for lv in extent) - parsed.vertical_pm,
-        z_high=max(lv.z_max_pm for lv in extent) + parsed.vertical_pm,
+        lo=window.lo,
+        hi=window.hi,
+        z_low=window.z_min_pm,
+        z_high=window.z_max_pm,
         faces=parsed.faces,
     )
     _check_ports_in_domain(setup, layout.grid.dbu_pm, found)
@@ -203,7 +241,7 @@ def prepare_physical_problem(
 
     approximations: list[Approximation]
     if request.dimensionality == "3d":
-        description: Extrusion3D | Reduced2D = _extrusion(setup)
+        description: Extrusion3D | Reduced2D = _extrusion(setup, port_spans)
         approximations = []
     else:
         assert request.reduction is not None and parsed.wavelength_pm is not None
@@ -216,7 +254,7 @@ def prepare_physical_problem(
         id=request.id,
         metadata=request.metadata,
         layout=revision_of(layout),
-        top_cell=flat.cell,
+        top_cell=geometry.cell,
         technology=revision_of(technology),
         design=request.design,
         dbu_pm=layout.grid.dbu_pm,
@@ -259,25 +297,22 @@ def _parse_request(request: PhysicalRequest, layout: Layout, found: _Findings) -
         )
     if request.dimensionality == "3d" and reduction is not None:
         found.add("physics.reduction.unexpected", "a 3D problem is not reduced", "reduction")
-    lateral = _exact_pm(request.margins.lateral, found, "margins", "lateral")
-    vertical = _exact_pm(request.margins.vertical, found, "margins", "vertical")
+    margins = request.margins
+    window = request.window
+    if margins is None and window is None:
+        found.add("physics.domain.required", "supply margins or an explicit physical window")
+    if margins is not None and window is not None:
+        found.add("physics.domain.conflicting", "supply only one of margins and window", "window")
+    if window is not None and request.dimensionality == "2d":
+        found.add(
+            "physics.window.unsupported", "an explicit window requires a 3D problem", "window"
+        )
+    parsed_margins = (
+        _parse_margins(margins, layout.grid.dbu_pm, found) if margins is not None else None
+    )
     wavelength = (
         _exact_pm(reduction.wavelength, found, "reduction", "wavelength") if reduction else None
     )
-    dbu = layout.grid.dbu_pm
-    if lateral is not None and lateral < 0:
-        found.add("physics.margin.negative", "lateral margin is negative", "margins", "lateral")
-    elif lateral is not None and lateral % dbu:
-        found.add(
-            "physics.margin.off_grid",
-            f"lateral margin {lateral} pm is not a multiple of the {dbu} pm database unit",
-            "margins",
-            "lateral",
-        )
-    if vertical is not None and vertical <= 0:
-        found.add(
-            "physics.margin.nonpositive", "vertical margin must be positive", "margins", "vertical"
-        )
     if wavelength is not None and wavelength <= 0:
         found.add(
             "physics.length.sub_picometre", "wavelength must be positive", "reduction", "wavelength"
@@ -299,9 +334,30 @@ def _parse_request(request: PhysicalRequest, layout: Layout, found: _Findings) -
             "boundaries",
             axis,
         )
-    if len(found.items) > before or vertical is None or lateral is None:
+    if len(found.items) > before:
         return None
-    return _Request(lateral // dbu, vertical, wavelength, faces)
+    return _Request(parsed_margins, wavelength, faces)
+
+
+def _parse_margins(margins: Margins, dbu: int, found: _Findings) -> _Margins | None:
+    lateral = _exact_pm(margins.lateral, found, "margins", "lateral")
+    vertical = _exact_pm(margins.vertical, found, "margins", "vertical")
+    if lateral is not None and lateral < 0:
+        found.add("physics.margin.negative", "lateral margin is negative", "margins", "lateral")
+    elif lateral is not None and lateral % dbu:
+        found.add(
+            "physics.margin.off_grid",
+            f"lateral margin {lateral} pm is not a multiple of the {dbu} pm database unit",
+            "margins",
+            "lateral",
+        )
+    if vertical is not None and vertical <= 0:
+        found.add(
+            "physics.margin.nonpositive", "vertical margin must be positive", "margins", "vertical"
+        )
+    if lateral is None or vertical is None:
+        return None
+    return _Margins(lateral // dbu, vertical)
 
 
 def _stack_levels(tech: TechnologyRevision, found: _Findings) -> list[_Level] | None:
@@ -343,24 +399,30 @@ def _stack_levels(tech: TechnologyRevision, found: _Findings) -> list[_Level] | 
 
 
 def _select_ports(
-    flat: FlatCell, request: PhysicalRequest, found: _Findings
+    layout: Layout, geometry: FlatCell | LayoutWindow, request: PhysicalRequest, found: _Findings
 ) -> list[tuple[str, Port]]:
-    available = {q.path: q.port for q in flat.ports}
+    available = {q.path: q.port for q in geometry.ports}
     if request.ports is None:
         return [(path, port) for path, port in available.items() if "/" not in path]
+    # Missing window ports may still exist elsewhere in the hierarchy. Resolve only the
+    # requested paths so we can distinguish missing ports without expanding any arrays.
+    cells = {cell.name: cell for cell in layout.cells} if isinstance(geometry, LayoutWindow) else {}
     selected: list[tuple[str, Port]] = []
     for path in sorted(set(request.ports)):
-        if path in available:
-            selected.append((path, available[path]))
-        else:
+        port = available.get(path)
+        if port is None and cells:
+            port = find_port(cells, geometry.cell, path)
+        if port is None:
             found.add("physics.port.unknown", f"layout has no port {path!r}", "ports", path)
+        else:
+            selected.append((path, port))
     return selected
 
 
 def _map_layers(
     layout: Layout,
     tech: TechnologyRevision,
-    flat: FlatCell,
+    polygons: dict[str, tuple[Polygon, ...]],
     ports: list[tuple[str, Port]],
     found: _Findings,
 ) -> dict[str, tuple[ProcessLevel, ...]]:
@@ -368,7 +430,7 @@ def _map_layers(
     be resolved are reported and left out."""
     resolved: dict[str, tuple[ProcessLevel, ...]] = {}
     specs = {spec.name: spec for spec in layout.layers}
-    for name in sorted({*flat.polygons, *(port.layer for _, port in ports)}):
+    for name in sorted({*polygons, *(port.layer for _, port in ports)}):
         where = ("layers", name)
         mapping = map_layer(tech, name)
         codes = {d.code for d in mapping.diagnostics}
@@ -400,7 +462,7 @@ def _map_layers(
                 *where,
             )
         levels = mapping.value.levels if mapping.value else ()
-        if not levels and layer.purpose is LayerPurpose.DRAWING and name in flat.polygons:
+        if not levels and layer.purpose is LayerPurpose.DRAWING and name in polygons:
             found.add(
                 "physics.layer.unpatterned",
                 f"shapes are drawn on layer {name!r}, which patterns no stack level",
@@ -474,17 +536,55 @@ def _check_nested(
             )
 
 
+def _port_spans(
+    levels: list[_Level], layer_levels: dict[str, tuple[ProcessLevel, ...]]
+) -> dict[str, tuple[int, int]]:
+    by_level = {entry.level.name: entry for entry in levels}
+    spans: dict[str, tuple[int, int]] = {}
+    for layer, mapped in layer_levels.items():
+        if mapped:
+            entries = [by_level[level.name] for level in mapped]
+            spans[layer] = (min(e.z_min_pm for e in entries), max(e.z_max_pm for e in entries))
+    return spans
+
+
+def _port_inside_xy(port: Port, lo: Point, hi: Point) -> bool:
+    a, b = (0, 1) if port.orientation in (0, 180) else (1, 0)
+    centre = port.center
+    return (
+        lo[a] <= centre[a] <= hi[a]
+        and 2 * lo[b] <= 2 * centre[b] - port.width
+        and 2 * centre[b] + port.width <= 2 * hi[b]
+    )
+
+
+def _ports_in_window(
+    ports: list[tuple[str, Port]],
+    window: PhysicalWindow,
+    spans: dict[str, tuple[int, int]],
+    explicit: bool,
+    found: _Findings,
+) -> list[tuple[str, Port]]:
+    inside: list[tuple[str, Port]] = []
+    for path, port in ports:
+        span = spans.get(port.layer)
+        fits_z = span is None or (window.z_min_pm <= span[0] and span[1] <= window.z_max_pm)
+        if fits_z and _port_inside_xy(port, window.lo, window.hi):
+            inside.append((path, port))
+        elif explicit:
+            found.add(
+                "physics.port.outside_domain",
+                f"port {path!r} is not fully inside the requested physical window",
+                "ports",
+                path,
+            )
+    return inside
+
+
 def _check_ports_in_domain(setup: _Setup, dbu_pm: int, found: _Findings) -> None:
     """Ports must lie inside the domain and outside any absorber of declared thickness."""
     for path, port in setup.ports:
-        a, b = (0, 1) if port.orientation in (0, 180) else (1, 0)
-        centre = port.center
-        inside = (
-            setup.lo[a] <= centre[a] <= setup.hi[a]
-            and 2 * setup.lo[b] <= 2 * centre[b] - port.width
-            and 2 * centre[b] + port.width <= 2 * setup.hi[b]
-        )
-        if not inside:
+        if not _port_inside_xy(port, setup.lo, setup.hi):
             found.add(
                 "physics.port.outside_domain",
                 f"port {path!r} segment is not inside the domain {setup.lo} to {setup.hi}",
@@ -492,6 +592,7 @@ def _check_ports_in_domain(setup: _Setup, dbu_pm: int, found: _Findings) -> None
                 path,
             )
             continue
+        centre = port.center
         distances = {
             Face.X_MIN: centre[0] - setup.lo[0],
             Face.X_MAX: setup.hi[0] - centre[0],
@@ -518,16 +619,17 @@ def _deg(level: ProcessLevel) -> float | None:
     return None if degrees == 90.0 else degrees
 
 
-def _extrusion(setup: _Setup) -> Extrusion3D:
+def _extrusion(setup: _Setup, port_spans: dict[str, tuple[int, int]]) -> Extrusion3D:
     tech = setup.tech
     films: list[Film] = []
     prisms: list[Prism] = []
     for entry in setup.levels:
         pattern = entry.level.pattern
         low, high = max(entry.z_min_pm, setup.z_low), min(entry.z_max_pm, setup.z_high)
+        if low >= high:
+            continue
         fill = pattern.fill if isinstance(pattern, Patterned) else entry.level.material
-        if low < high:
-            films.append(Film(level=entry.level.name, z_min_pm=low, z_max_pm=high, material=fill))
+        films.append(Film(level=entry.level.name, z_min_pm=low, z_max_pm=high, material=fill))
         if isinstance(pattern, Patterned):
             for layer in sorted(pattern.layers):
                 for polygon in setup.drawn.get(layer, ()):
@@ -536,6 +638,7 @@ def _extrusion(setup: _Setup) -> Extrusion3D:
                             level=entry.level.name,
                             layer=layer,
                             polygon=polygon,
+                            # The uncut base sets the sidewall offset at every height.
                             z_min_pm=entry.z_min_pm,
                             z_max_pm=entry.z_max_pm,
                             material=entry.level.material,
@@ -543,15 +646,14 @@ def _extrusion(setup: _Setup) -> Extrusion3D:
                         )
                     )
     names = {tech.stack.background, *(f.material for f in films), *(p.material for p in prisms)}
-    by_level = {entry.level.name: entry for entry in setup.levels}
     ports = []
     for path, port in setup.ports:
-        spans = [by_level[lv.name] for lv in setup.layer_levels[port.layer]]
+        low, high = port_spans[port.layer]
         ports.append(
             Port3D(
                 **setup.plane(path, port).model_dump(),
-                z_min_pm=min(s.z_min_pm for s in spans),
-                z_max_pm=max(s.z_max_pm for s in spans),
+                z_min_pm=low,
+                z_max_pm=high,
             )
         )
     return Extrusion3D(

@@ -1,8 +1,8 @@
 """A hash of the physical content of a `PhysicalProblem`.
 
-`revision_of(problem)` changes with any edit. The fingerprint changes only when what a
-solver would simulate changes, so a re-published but physically identical problem is
-recognised (MOD-018).
+`revision_of(problem)` changes with any edit. The fingerprint compares the recorded
+physical description (MOD-018). It is conservative for an explicit window, which can
+retain a prism extending beyond the domain.
 
 Included: `dbu_pm`, the whole `description` (domain and boundary conditions, materials
 without their `source`, films, prisms, regions, indices, ports with their layout port

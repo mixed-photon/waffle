@@ -37,6 +37,7 @@ waffle_py_library(
         "//waffle/contracts/component:refs",
         "//waffle/contracts/foundation:records",
         "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:transform",
         "//waffle/contracts/layout",
         "//waffle/contracts/physics:approximations",
         "//waffle/contracts/physics:problem",
@@ -73,11 +74,28 @@ waffle_py_library(
         "//waffle/contracts/physics:problem",
         "//waffle/contracts/technology:revision",
         "//waffle/geometry/services:grid",
+        "//waffle/layout/services:cells",
         "//waffle/layout/services:flatten",
         "//waffle/layout/services:validate",
+        "//waffle/layout/services:window",
         "//waffle/simulation/photonics/device_analysis:reduction",
         "//waffle/technology:mapping",
         "//waffle/technology:validate",
+    ],
+)
+
+waffle_py_library(
+    name = "material_geometry",
+    srcs = ["material_geometry.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/physics:problem",
+        "//waffle/geometry/services:sections",
+        "//waffle/geometry/services:shapes",
     ],
 )
 
@@ -127,6 +145,7 @@ _TEST_DEPS = [
 ]
 
 waffle_py_test(name = "ports_test", deps = [":ports"] + _TEST_DEPS)
+waffle_py_test(name = "material_geometry_test", deps = [":material_geometry"] + _TEST_DEPS)
 
 waffle_py_test(
     name = "prepare_test",

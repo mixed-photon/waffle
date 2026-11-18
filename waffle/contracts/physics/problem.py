@@ -216,9 +216,9 @@ class Prism(BaseModel):
 
 class Extrusion3D(BaseModel):
     """Everything the stack contains inside the domain, as paint layers: `background`
-    everywhere, then `films` bottom to top, then `prisms` (same-level prisms share a
-    material, so their order does not matter). `materials` are the models used, copied from
-    the technology so the problem is self-contained."""
+    everywhere, then `films`, then `prisms`. Later entries within each list take
+    precedence. A prism keeps its full footprint and base height across a domain cut.
+    `materials` supplies the models used by the region so it is self-contained."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

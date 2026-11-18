@@ -16,10 +16,21 @@ waffle_py_library(
 )
 
 waffle_py_library(
+    name = "sections",
+    srcs = ["sections.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+    ],
+)
+
+waffle_py_library(
     name = "shapes",
     srcs = ["shapes.py"],
     visibility = _VISIBILITY,
     deps = [
+        ":sections",
         "//waffle/contracts/foundation:diagnostics",
         "//waffle/contracts/foundation:result",
         "//waffle/contracts/geometry:shapes",
@@ -51,6 +62,8 @@ waffle_py_test(
         "//waffle/contracts/geometry:grid",
     ],
 )
+
+waffle_py_test(name = "sections_test", deps = [":sections", "//waffle/contracts/geometry:shapes"])
 
 waffle_py_test(
     name = "shapes_test",

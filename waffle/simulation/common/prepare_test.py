@@ -12,7 +12,7 @@ from waffle.contracts.foundation.records import load_record, revision_of, to_can
 from waffle.contracts.foundation.units import Quantity
 from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Rectangle
-from waffle.contracts.layout.layout import Cell, LayerSpec, Layout, Port
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, LayerSpec, Layout, Port
 from waffle.contracts.physics.approximations import (
     EffectiveIndexReduction,
     Polarization,
@@ -36,7 +36,12 @@ from waffle.pdk.testing.synthetic import synthetic_soi
 from waffle.simulation.common import examples
 from waffle.simulation.common.examples import request
 from waffle.simulation.common.prepare import prepare_physical_problem
-from waffle.simulation.common.request import EffectiveIndexSpec, Margins, PhysicalRequest
+from waffle.simulation.common.request import (
+    EffectiveIndexSpec,
+    Margins,
+    PhysicalRequest,
+    PhysicalWindow,
+)
 from waffle.simulation.photonics.device_analysis.slab_reference import symmetric_transcendental
 
 TECH = synthetic_soi()
@@ -580,3 +585,110 @@ def test_2d_wavelength_outside_material_validity_is_an_error() -> None:
     )
     found = fails(examples.straight_waveguide(), request("2d", reduction=spec))
     assert "technology.material_out_of_range" in codes(found)
+
+
+def test_window_is_a_strict_3d_domain_choice() -> None:
+    window = PhysicalWindow(lo=(0, -250), hi=(1000, 250), z_min_pm=0, z_max_pm=220_000)
+    direct = PhysicalRequest(
+        id=EntityId("physical_problem", "local"), dimensionality="3d", window=window
+    )
+    assert direct.margins is None and "margins" not in direct.model_dump()
+    assert PhysicalRequest.model_validate_json(direct.model_dump_json()) == direct
+    assert "window" not in request().model_dump()
+    layout = examples.straight_waveguide()
+    assert codes(fails(layout, request(margins=None))) == ["physics.domain.required"]
+    assert codes(fails(layout, request(window=window))) == ["physics.domain.conflicting"]
+    assert codes(fails(layout, request("2d", margins=None, window=window))) == [
+        "physics.window.unsupported"
+    ]
+    for update in (
+        {"lo": (1000, -250)},
+        {"hi": (1000, -251)},
+        {"hi": (1000.0, 250)},
+        {"z_min_pm": 220_000},
+        {"z_max_pm": True},
+    ):
+        with pytest.raises(ValidationError):
+            PhysicalWindow.model_validate({**window.model_dump(), **update})
+
+
+def test_missing_domain_is_reported_before_expanding_instances(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unexpected_flatten(*args: object, **kwargs: object) -> None:
+        pytest.fail("domain choice must be known before flattening")
+
+    monkeypatch.setattr("waffle.simulation.common.prepare.flatten", unexpected_flatten)
+    layout = examples.hierarchical_bend()
+    assert codes(fails(layout, request(margins=None))) == ["physics.domain.required"]
+
+
+def test_window_cuts_films_and_preserves_sloped_prism_origins() -> None:
+    layout = examples.straight_waveguide()
+    tech = replace_level(TECH, "core", sidewall_angle=Quantity(value=80, unit="deg"))
+    window = PhysicalWindow(lo=(100, 200), hi=(200, 260), z_min_pm=125_000, z_max_pm=150_000)
+    problem = prepare(layout, request(margins=None, window=window), tech)
+    d = extrusion(problem)
+    assert d.domain.model_dump(exclude={"boundaries"}) == window.model_dump()
+    assert [(f.level, f.z_min_pm, f.z_max_pm) for f in d.films] == [("core", 125_000, 150_000)]
+    (core,) = d.prisms
+    assert core.level == "core" and core.z_min_pm == 90_000 and core.z_max_pm == 220_000
+    assert core == extrusion(prepare(layout, request(), tech)).prisms[-1]
+    assert problem.layout == revision_of(layout) and problem.technology == revision_of(tech)
+    assert load_record(to_canonical_json(problem), PhysicalProblem).unwrap() == problem
+
+
+def test_window_with_no_drawn_geometry_can_hold_blanket_material_or_only_background() -> None:
+    layout = examples.straight_waveguide()
+    window = PhysicalWindow(lo=(100, 1000), hi=(200, 1200), z_min_pm=-200_000, z_max_pm=-100_000)
+    d = extrusion(prepare(layout, request(margins=None, window=window)))
+    assert [(f.level, f.material, f.z_min_pm, f.z_max_pm) for f in d.films] == [
+        ("box", "sio2", -200_000, -100_000)
+    ]
+    assert not d.prisms and not d.ports
+    above = window.model_copy(update={"z_min_pm": 10_000_000, "z_max_pm": 11_000_000})
+    d = extrusion(prepare(layout, request(margins=None, window=above)))
+    assert not d.films and not d.prisms and [m.name for m in d.materials] == [d.background]
+
+
+def test_window_default_ports_belong_to_the_selected_cell() -> None:
+    layout = examples.hierarchical_bend()
+    window = PhysicalWindow(lo=(0, -250), hi=(1000, 250), z_min_pm=0, z_max_pm=220_000)
+    default = request(margins=None, window=window)
+    assert [p.path for p in extrusion(prepare(layout, default)).ports] == ["in"]
+    leaf = default.model_copy(update={"cell": "leaf"})
+    assert [p.path for p in extrusion(prepare(layout, leaf)).ports] == ["o1"]
+
+
+@pytest.mark.parametrize("clip", [{"lo": (0, -249)}, {"z_min_pm": 1}, {"z_max_pm": 219_999}])
+def test_window_handles_ports_that_straddle_a_face(clip: dict[str, object]) -> None:
+    layout = examples.straight_waveguide()
+    window = PhysicalWindow(lo=(0, -250), hi=(1000, 250), z_min_pm=0, z_max_pm=220_000)
+    clipped = window.model_copy(update=clip)
+    default = request(margins=None, window=clipped)
+    assert extrusion(prepare(layout, default)).ports == ()
+    explicit = default.model_copy(update={"ports": ("o1",)})
+    (diagnostic,) = fails(layout, explicit)
+    assert diagnostic.code == "physics.port.outside_domain"
+    assert diagnostic.location == ("ports", "o1")
+
+
+def test_window_resolves_explicit_array_port_paths_without_expanding_the_array() -> None:
+    layout = examples.straight_waveguide()
+    array = InstanceArray(
+        columns=1_000_000, rows=1_000_000, column_step=(20_000, 0), row_step=(0, 1000)
+    )
+    top = Cell(name="array", instances=(Instance(name="copy", cell=layout.top, array=array),))
+    layout = layout.model_copy(update={"top": top.name, "cells": (top, *layout.cells)})
+    x, y = 999_999 * 20_000, 500_000 * 1000
+    window = PhysicalWindow(lo=(x, y - 250), hi=(x + 1000, y + 250), z_min_pm=0, z_max_pm=220_000)
+    default = request(margins=None, window=window)
+    assert extrusion(prepare(layout, default)).ports == ()
+    inside, outside, missing = "copy/500000/999999/o1", "copy/0/0/o1", "copy/0/1000000/o1"
+    (port,) = extrusion(prepare(layout, default.model_copy(update={"ports": (inside,)}))).ports
+    assert port.path == inside and port.center == (x, y)
+    diagnostics = fails(layout, default.model_copy(update={"ports": (outside, missing)}))
+    assert [(d.code, d.location) for d in diagnostics] == [
+        ("physics.port.unknown", ("ports", missing)),
+        ("physics.port.outside_domain", ("ports", outside)),
+    ]

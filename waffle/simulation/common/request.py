@@ -9,21 +9,24 @@ chooses how the layout and technology are described physically.
   geometry; `margins.vertical` is added above and below the vertical extent of the
   patterned levels. For 3D this is the domain's vertical extent; for 2D it is the window the
   vertical stacks are cut to for the reduction.
+* `window` sets an explicit 3D domain in the selected cell's dbu and stack picometres.
+  Supply exactly one of `margins` and `window`.
 * `boundaries` overrides faces (default: absorbing, solver-chosen thickness). `z_*` faces
   apply to 3D only.
 * `ports` selects layout port paths (`name`, `inst/name`); the default is the ports of the
-  prepared cell itself (paths without `/`).
+  prepared cell itself (paths without `/`) that fit inside the explicit window, if supplied.
 """
 
 from __future__ import annotations
 
 from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
 from waffle.contracts.component.refs import DesignRef
 from waffle.contracts.foundation.records import EntityIdField
 from waffle.contracts.foundation.units import Quantity
+from waffle.contracts.geometry.transform import Point
 from waffle.contracts.layout.layout import Name
 from waffle.contracts.physics.approximations import Polarization
 from waffle.contracts.physics.problem import BoundaryCondition, Face
@@ -34,6 +37,25 @@ class Margins(BaseModel):
 
     lateral: Quantity
     vertical: Quantity
+
+
+class PhysicalWindow(BaseModel):
+    """Exact limits of a 3D domain in layout dbu (x, y) and stack picometres (z)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    lo: Point
+    hi: Point
+    z_min_pm: StrictInt
+    z_max_pm: StrictInt
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Self:
+        if self.lo[0] >= self.hi[0] or self.lo[1] >= self.hi[1]:
+            raise ValueError("window needs lo < hi on both axes")
+        if self.z_min_pm >= self.z_max_pm:
+            raise ValueError("window needs z_min_pm < z_max_pm")
+        return self
 
 
 class EffectiveIndexSpec(BaseModel):
@@ -52,13 +74,14 @@ class PhysicalRequest(BaseModel):
 
     id: EntityIdField
     dimensionality: Literal["2d", "3d"]
-    margins: Margins
+    margins: Margins | None = Field(default=None, exclude_if=lambda margins: margins is None)
     reduction: EffectiveIndexSpec | None = None
     boundaries: dict[Face, BoundaryCondition] = Field(default_factory=dict)
     cell: Name | None = None
     ports: tuple[str, ...] | None = None
     design: DesignRef | None = None
     metadata: dict[str, str] = Field(default_factory=dict)
+    window: PhysicalWindow | None = Field(default=None, exclude_if=lambda window: window is None)
 
     @model_validator(mode="after")
     def _problem_id(self) -> Self:

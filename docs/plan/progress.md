@@ -28,11 +28,11 @@ acceptance criteria and the separate native and deployment tracks.
 | MOD-018 | Operation fingerprints, historical and dependency replay, concurrent publication and interrupted retry |
 | MOD-019 | Installed Python and CLI workflows, separate solver environment selection, and directional waveguide publication and replay |
 | MOD-020 | Recorded installed lifecycle, numerical evidence, and developer handoff |
-| MOD-021 | Compact 2D layout arrays and hierarchy-aware window selection. Localized 3D material assembly and the via-and-trench fixture remain open. |
+| MOD-021 | Compact 2D layout arrays, hierarchy-aware window selection, localized 3D extrusions, and sampled material sections verified against a full-layout via-and-trench fixture |
 
 ## Verification
 
-The build and 169 fast test targets passed, including layer boundary tests.
+The build and 174 fast test targets passed, including layer boundary tests.
 All 11 explicit backend and numerical test targets also passed. Run those
 targets explicitly to keep the fast suite backend independent.
 
@@ -54,7 +54,7 @@ follow the [installation walkthrough](../designer_workflow.md).
 
 The verified numerical result is a single 1550 nm TM sample for each synthetic
 2D device. The simulated waveguide exposes all four two-port responses, and the
-MMI exposes two forward responses. Broadband interpolation, 3D qualification,
+MMI exposes two forward responses. Broadband interpolation, 3D solver qualification,
 and instrument validation remain open. Power calibration uses synthetic
 captures and retains the simulated phase. Installed platform verification
 covers Python 3.13 on macOS arm64 and in a Debian Linux arm64 container.

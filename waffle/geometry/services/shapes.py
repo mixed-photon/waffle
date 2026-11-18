@@ -7,6 +7,7 @@ from waffle.contracts.foundation.result import Result
 from waffle.contracts.geometry.shapes import BBox, Path, Polygon, Rectangle
 from waffle.contracts.geometry.transform import Point
 from waffle.contracts.geometry.unsupported import Unsupported, unsupported
+from waffle.geometry.services.sections import contains_at_inset
 
 Location = tuple[str | int, ...]
 
@@ -132,14 +133,7 @@ def polygon_intersects_box(polygon: Polygon, box: BBox) -> bool:
         return True
 
     # With no boundary intersections, the box is either entirely inside or outside.
-    # Count crossings of the horizontal ray to the right of its lower-left corner.
-    crossings = sum(
-        1
-        for a, b in edges
-        if (a[1] > y0) != (b[1] > y0)
-        and _side(a, b, box.lo) == (1 if b[1] > a[1] else -1)
-    )
-    return crossings % 2 == 1
+    return contains_at_inset(polygon, box.lo, 0.0)
 
 
 def is_simple(polygon: Polygon) -> bool:
