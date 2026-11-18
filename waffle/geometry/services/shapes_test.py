@@ -1,7 +1,13 @@
 from __future__ import annotations
 
-from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
-from waffle.geometry.services.shapes import is_simple, path_to_polygon, to_polygon, validate_shape
+from waffle.contracts.geometry.shapes import BBox, Path, Polygon, Rectangle
+from waffle.geometry.services.shapes import (
+    is_simple,
+    path_to_polygon,
+    polygon_intersects_box,
+    to_polygon,
+    validate_shape,
+)
 
 
 def codes(diagnostics: list) -> list[str]:  # type: ignore[type-arg]
@@ -45,6 +51,19 @@ def test_invalid_paths_fail_explicitly() -> None:
 def test_to_polygon_expands_rectangles() -> None:
     rect = Rectangle(lo=(0, 0), hi=(4, 2))
     assert to_polygon(rect).unwrap() == Polygon(points=((0, 0), (4, 0), (4, 2), (0, 2)))
+
+
+def test_polygon_intersection_uses_the_outline_and_includes_boundary_contact() -> None:
+    triangle = Polygon(points=((0, 0), (10, 0), (0, 10)))
+    assert polygon_intersects_box(triangle, BBox((2, 2), (3, 3)))
+    assert polygon_intersects_box(triangle, BBox((0, 4), (10, 5)))
+    assert polygon_intersects_box(triangle, BBox((4, 6), (4, 6)))
+    assert not polygon_intersects_box(triangle, BBox((6, 6), (8, 8)))
+    assert not polygon_intersects_box(triangle, BBox((5, 6), (5, 6)))
+
+    concave = Polygon(points=((0, 0), (10, 0), (10, 3), (3, 3), (3, 10), (0, 10)))
+    assert not polygon_intersects_box(concave, BBox((5, 5), (6, 6)))
+    assert polygon_intersects_box(concave, BBox((2, 5), (6, 6)))
 
 
 def test_self_intersection_is_detected() -> None:

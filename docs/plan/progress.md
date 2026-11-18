@@ -24,14 +24,15 @@ acceptance criteria and the separate native and deployment tracks.
 | MOD-014 | Qualified exact-sample two-port waveguide and forward MMI responses, with immutable model evidence |
 | MOD-015 | Bounded optical-power JSON ingestion, exact specimen/design/mapping association, raw and processed artifact provenance |
 | MOD-016 | Bounded power attenuation fit with separate validation, comparison artifact and exact model revision |
-| MOD-017 | Independently installable synthetic demo PDK and two example wheels |
+| MOD-017 | Independently installable demo PDK and example wheels, with shared directory validation and exact registry resolution for public and restricted synthetic PDKs |
 | MOD-018 | Operation fingerprints, historical and dependency replay, concurrent publication and interrupted retry |
 | MOD-019 | Installed Python and CLI workflows, separate solver environment selection, and directional waveguide publication and replay |
 | MOD-020 | Recorded installed lifecycle, numerical evidence, and developer handoff |
+| MOD-021 | Compact 2D layout arrays and hierarchy-aware window selection. Localized 3D material assembly and the via-and-trench fixture remain open. |
 
 ## Verification
 
-The build and 167 fast test targets passed, including layer boundary tests.
+The build and 169 fast test targets passed, including layer boundary tests.
 All 11 explicit backend and numerical test targets also passed. Run those
 targets explicitly to keep the fast suite backend independent.
 

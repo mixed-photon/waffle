@@ -51,6 +51,17 @@ waffle_py_library(
 )
 
 waffle_py_library(
+    name = "window",
+    srcs = ["window.py"],
+    visibility = _VISIBILITY,
+    deps = _CONTRACTS + [
+        ":cells",
+        ":validate",
+        "//waffle/geometry/services:shapes",
+    ],
+)
+
+waffle_py_library(
     name = "regrid",
     srcs = ["regrid.py"],
     visibility = _VISIBILITY,
@@ -82,6 +93,7 @@ waffle_py_test(name = "validate_test", deps = [":validate"] + _TEST_DEPS)
 waffle_py_test(name = "cells_test", deps = [":cells", ":flatten"] + _TEST_DEPS)
 
 waffle_py_test(name = "flatten_test", deps = [":flatten", ":physical", ":cells"] + _TEST_DEPS)
+waffle_py_test(name = "window_test", deps = [":flatten", ":window", "//waffle/geometry/services:shapes"] + _TEST_DEPS)
 
 waffle_py_test(
     name = "regrid_test",

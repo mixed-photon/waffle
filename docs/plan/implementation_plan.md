@@ -582,6 +582,31 @@ Document how to add another component, PDK, and backend.
 - Implementation, tests, recorded numerical evidence, and documentation are reviewable.
 - Remaining limitations are explicit.
 
+## Hierarchical geometry extension
+
+### MOD-021 — Hierarchical 2D layout and 3D physical geometry
+
+**Dependencies** — MOD-005 and MOD-006.
+
+Extend layout interchange to compact repeated-cell arrays and add window selection
+through the hierarchy. Use the existing layout backend for the first implementation
+and measure extraction before choosing native geometry work.
+
+Construct localized 3D material geometry from a pinned layout and process stack,
+and support directly authored 3D shapes with explicit placements, materials, and
+overlap rules. Use the physical geometry for consistent sections and local
+simulation preparation.
+
+**Acceptance**
+
+- Round-trip supported arrays through GDS with stable member paths and port placement.
+- Match window selection against a fully expanded reference and measure work on a
+  large repeated-cell layout at fixed window size.
+- Reproduce dimensions and material boundaries for a multilayer via-and-trench
+  fixture in the 3D region and its cross-section.
+- Compare localized physical construction with the same region cut after building
+  the full fixture, including features whose sidewalls enter the query window.
+
 ## Native implementation track
 
 Start native implementation work against the interfaces established above.

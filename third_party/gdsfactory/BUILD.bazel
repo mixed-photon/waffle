@@ -33,10 +33,14 @@ py_library(
     visibility = _ADAPTER,
     deps = [
         ":upstream",
+        "//waffle/contracts/foundation:diagnostics",
         "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/geometry:unsupported",
         "//waffle/contracts/layout",
         "//waffle/geometry/services:shapes",
         "//waffle/layout/backend:interface",
+        "@pip_core//pydantic",
     ],
 )
 
@@ -54,6 +58,7 @@ py_library(
         "//waffle/contracts/foundation:result",
         "//waffle/contracts/geometry:grid",
         "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
         "//waffle/contracts/geometry:unsupported",
         "//waffle/contracts/layout",
         "//waffle/geometry/services:transforms",

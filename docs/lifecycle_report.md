@@ -86,6 +86,17 @@ publishes the partial model, binds it, and checks replay and coverage rejection.
 A separate invocation of the installed CLI reproduced both MMI responses from
 that binding. The build, 162 fast targets and ten explicit backend targets passed.
 
+## Restricted PDK acceptance
+
+`//waffle/technology:registry_test` runs the same redistributable synthetic PDK
+with each manifest classification (`public` and `restricted`). For each, `write_pdk`
+exports the directory, `validate_pdk_directory` validates it, and
+`PdkRegistry.add_directory` and entry-point discovery register the same manifest
+and resolve its exact pinned technology revision. Both routes reject incompatible
+Waffle versions for either classification. The fixture requires no foundry files.
+PDK owners control distribution through their own channels, and Waffle records
+the access classification in the manifest. [Technology and PDK contracts](contracts/technology.md)
+
 ## Extending the workflow
 
 - Define a component interface and typed design parameters, pin an implementation,

@@ -143,6 +143,7 @@ metadata records generator, version, technology revision, backend, and backend v
 | Shapes | box, polygon, path | `Rectangle`, `Polygon`, `Path` (flush or square end); paths export as outline polygons |
 | Holes | polygons with holes; GDS stores them as zero-width keyholes | `polygon_holes` (both forms detected) |
 | Instance name | property key 0 (kfactory `PROPID.NAME`), written the same way on export | `Instance.name`; absent names become `<child>_<n>` in a deterministic order, info diagnostic |
+| Instance array | one compact GDS AREF with column/row counts and exact integer spacing | `Instance.array`, with columns along the transformed child-local +X axis and rows along the transformed child-local +Y axis |
 | Cell, instance, port names | any string | IR `Name`: illegal characters become `_`, a leading `-`, `.`, `$` gets `_`; rewrite is an info diagnostic and `Layout.metadata["name.<kind>.<new>"]` keeps the original; clashes are `name_collision` |
 | Cell names | `gf.Component(name=...)` keeps the given name (unnamed ones get gdsfactory's generated names) | taken as is, then normalised as above |
 | Cells | all cells of the file | all cells are imported; `top` is the sidecar's or the request's, else the only unreferenced cell (`top_ambiguous`) |
@@ -169,10 +170,22 @@ on each cell's own shapes (hierarchy and ports kept) with klayout regions; resul
 polygons. A result with a hole (for example `b` strictly inside `a` with `not`) is
 `geometry.unsupported.polygon_holes`.
 
+### Instance arrays
+
+Regular rectangular GDS arrays stay compact. Import canonicalizes reversed or transposed
+foreign array indices with `layout.backend.array_normalized`, preserving the placement
+coordinates and member transforms. A 1 × 1 reference becomes an ordinary instance.
+Export requires Waffle array axes to follow the child-local +X and +Y order so the
+instance origin and indexed port paths survive a round trip. Invalid or unsupported
+arrays report `layout.unsupported.array_instance`. This includes off-grid spacing, zero
+or nonorthogonal active steps, and counts above 32,767. AREF endpoint coordinates must
+fit signed 32-bit integers and the span from the origin to either endpoint must have
+magnitude at most 2³¹ − 1 dbu.
+
 ### Known unsupported constructs
 
-Array instances (`layout.unsupported.array_instance`); rotations other than multiples of 90
-degrees and magnification other than 1 on instances or ports; curves (round paths); paths
+Rotations other than multiples of 90 degrees and magnification other than 1 on instances
+or ports; curves (round paths); paths
 with other end extensions; diagonal path segments (`validate_layout`); polygons with holes;
 text and other non-polygon shapes; instances of cells the file does not define
 (`layout.unsupported.external_reference`); non-optical, non-electrical, unnamed, or off-grid

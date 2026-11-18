@@ -73,8 +73,12 @@ orientations and connectivity inexact. `Placement` (circuit level) converts with
 
 `Layout` (record kind `layout`, id `layout:<name>`): `grid`, `top`, `layers`, `cells`.
 `Cell`: `name`, `shapes` (logical layer name to shapes), `instances`, `ports`.
-`Instance`: `name`, child `cell`, `transform`. "Geometry references" are the shapes a cell
-holds on a layer plus instances of other cells; there is no separate geometry library.
+`Instance`: `name`, child `cell`, `transform`, and optional `array`. The transform
+places the first member. An array stores row and column counts and their step vectors,
+expressed in the parent frame in dbu. Active steps are signed Manhattan vectors, with
+perpendicular directions when both axes repeat. A singleton axis has zero step.
+Ordinary instances omit `array` from their serialized form and keep their original
+canonical bytes and revision hashes.
 
 * **Layers.** Shapes and ports reference a layer by its **logical name**. The layer table
   `LayerSpec(name, layer, datatype)` maps each name to its GDS pair; names and pairs are
@@ -120,9 +124,28 @@ kept. Cell order is therefore not significant; the `top` field names the root.
 | `layout.services.validate` | `validate_layout`, `find_cycles` |
 | `layout.services.cells` | `transform_cell`, `instance_ports`, `QualifiedPort` |
 | `layout.services.flatten` | `flatten` to `FlatCell` (sorted per-layer polygons, ports by path, `bounding_box`) |
+| `layout.services.window` | `extract_window` to select whole polygons and qualified ports in a closed window |
 | `layout.services.physical` | `to_physical` to `PhysicalCell`: float lengths in a unit (default `um`) |
 | `layout.services.regrid` | `regrid` |
 | `layout.services.compare` | `compare_layouts` in `HIERARCHICAL` or `FLAT` mode |
+
+Array member port paths append zero-based row and column indices, for example
+`block/array/2/5/in`. Transforming a cell moves the step vectors along with its
+instances, so these indices continue to identify the corresponding member.
+
+`extract_window` accepts a closed `BBox` in the selected cell's frame. It selects
+polygons that touch the window and ports whose centers lie within it. It returns
+whole outlines, including portions outside the window, so later physical
+construction can use the original feature boundaries. It indexes the bounds of
+unique referenced cells and computes the intersecting array index ranges using
+integer arithmetic. Window selection is a layout operation. Physical extraction
+also needs the process stack and any geometry outside the window that contributes
+after extrusion.
+
+The window test matches a fully expanded reference with rotated, mirrored, and
+nested array placements. A second fixture selects exactly one member from a
+compact 30,000 × 30,000 array. A local macOS ARM64 check of that single-window
+query took about 0.05 ms with 9.8 KiB of peak traced Python allocations.
 
 Comparison ignores ids, metadata, manufacturing grid, and storage order; shapes compare as
 normalized polygons (a rectangle equals its four-corner polygon, a path its outline) as
@@ -146,7 +169,7 @@ yields an error `Diagnostic` with the stable code:
 | `geometry.unsupported.path_segment` | diagonal path segments |
 | `geometry.unsupported.rotation` | angles that are not multiples of 90 degrees |
 | `geometry.unsupported.magnification` | magnification other than 1 |
-| `layout.unsupported.array_instance` | array references (AREF); expand upstream |
+| `layout.unsupported.array_instance` | array references outside the supported repetition or adapter subset |
 | `layout.unsupported.external_reference` | instance of a cell outside the layout |
 
 `transform_from_parts` and `placement_to_transform` raise the rotation and magnification

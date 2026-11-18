@@ -4,8 +4,10 @@ components and foreign GDS files."""
 from __future__ import annotations
 
 import math
+import struct
 
 import klayout.db as kdb
+import pytest
 
 from third_party.gdsfactory.backend import GdsfactoryBackend
 from third_party.gdsfactory.convert import clean_name, layout_from_klayout
@@ -18,7 +20,7 @@ from waffle.contracts.foundation.result import Result
 from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Path, Rectangle
 from waffle.contracts.geometry.transform import Transform
-from waffle.contracts.layout.layout import Layout
+from waffle.contracts.layout.layout import InstanceArray, Layout
 from waffle.layout.backend.interface import BackendCode, ImportRequest
 from waffle.layout.formats.testing import gds_bytes
 from waffle.layout.services.validate import validate_layout
@@ -43,14 +45,40 @@ def straight(canvas: Canvas, name: str = "wire"):  # type: ignore[no-untyped-def
 # Constructs outside the IR subset are errors with the shared codes
 
 
-def test_array_instances_are_unsupported() -> None:
+def test_regular_klayout_instances_keep_array_axes_and_name() -> None:
+    def build(canvas: Canvas) -> str:
+        child = straight(canvas)
+        top = canvas.component("top")
+        placed = top.kdb_cell.insert(
+            kdb.CellInstArray(
+                child.cell_index(),
+                kdb.Trans(1, True, 100, 200),
+                kdb.Vector(-2000, 0),
+                kdb.Vector(0, 3000),
+                3,
+                2,
+            )
+        )
+        placed.set_property(0, "repeated")
+        return "top"
+
+    layout = convert_upstream(build).unwrap()
+    (instance,) = layout.cells[1].instances
+    assert instance.name == "repeated"
+    assert instance.transform == Transform(rotation=90, mirror=True, translation=(100, 200))
+    assert instance.array == InstanceArray(
+        columns=3, rows=2, column_step=(-2000, 0), row_step=(0, 3000)
+    )
+
+
+def test_nonrectangular_array_instances_are_unsupported() -> None:
     def build(canvas: Canvas) -> str:
         child = straight(canvas)
         top = canvas.component("top")
         vector = kdb.Vector
         top.kdb_cell.insert(
             kdb.CellInstArray(
-                child.cell_index(), kdb.Trans(), vector(2000, 0), vector(0, 2000), 3, 2
+                child.cell_index(), kdb.Trans(), vector(2000, 2000), vector(0, 2000), 3, 2
             )
         )
         return "top"
@@ -58,7 +86,7 @@ def test_array_instances_are_unsupported() -> None:
     result = convert_upstream(build)
     assert result.value is None
     assert codes(result) == ["layout.unsupported.array_instance"]
-    assert "3x2 array" in result.diagnostics[0].message
+    assert "Manhattan vector" in result.diagnostics[0].message
     assert result.diagnostics[0].location == ("cells", "top", "instances", 0)
 
 
@@ -321,6 +349,69 @@ def import_foreign(data: bytes, **kwargs) -> Result[Layout]:  # type: ignore[no-
     return BACKEND.import_gds(data, request)
 
 
+_AREF_FIELDS = struct.Struct(">HBBhhHBB6i")
+
+
+def foreign_array(counts: tuple[int, int], xy: tuple[int, ...]) -> bytes:
+    def build(ly: kdb.Layout, wg: int) -> None:
+        child, top = ly.create_cell("child"), ly.create_cell("top")
+        child.shapes(wg).insert(kdb.Box(0, 0, 100, 100))
+        top.insert(
+            kdb.CellInstArray(
+                child.cell_index(), kdb.Trans(), kdb.Vector(200, 0), kdb.Vector(0, 300), 2, 3
+            )
+        )
+
+    def records(counts: tuple[int, int], xy: tuple[int, ...]) -> bytes:
+        return _AREF_FIELDS.pack(8, 0x13, 2, *counts, 28, 0x10, 3, *xy)
+
+    data = foreign(build)
+    original = records((2, 3), (0, 0, 400, 0, 0, 900))
+    assert data.count(original) == 1
+    return data.replace(original, records(counts, xy))
+
+
+def test_foreign_array_normalizes_reversed_and_transposed_wire_indices() -> None:
+    result = import_foreign(foreign_array((2, 3), (1000, 1000, 1000, 600, 100, 1000)))
+    (instance,) = result.unwrap().cells[1].instances
+    assert instance.name == "child_1"
+    assert instance.transform == Transform(translation=(400, 800))
+    assert instance.array == InstanceArray(
+        columns=3, rows=2, column_step=(300, 0), row_step=(0, 200)
+    )
+    assert "layout.backend.array_normalized" in [finding.code for finding in result.diagnostics]
+
+
+def test_foreign_singleton_array_is_a_single_instance() -> None:
+    # Unused steps do not place any geometry.
+    result = import_foreign(foreign_array((1, 1), (100, 100, 101, 103, 200, 999)))
+    (instance,) = result.unwrap().cells[1].instances
+    assert instance.array is None
+    assert instance.transform.translation == (100, 100)
+
+
+@pytest.mark.parametrize(
+    ("counts", "xy", "detail"),
+    [
+        ((2, 3), (0, 0, 401, 0, 0, 900), "integer number"),
+        ((2, 3), (0, 0, 0, 0, 0, 900), "nonzero Manhattan vector"),
+        ((2, 3), (0, 0, 400, 400, 0, 900), "nonzero Manhattan vector"),
+        ((2, 3), (0, 0, 400, 0, 900, 0), "perpendicular"),
+        ((0, 3), (0, 0, 0, 0, 0, 900), "counts must be positive"),
+        ((2, 1), (-(2**30), 0, 2**30, 0, -(2**30), 0), "signed 32-bit"),
+    ],
+)
+def test_foreign_arrays_klayout_could_change_are_refused(
+    counts: tuple[int, int], xy: tuple[int, ...], detail: str
+) -> None:
+    result = import_foreign(foreign_array(counts, xy))
+    assert result.value is None
+    (finding,) = errors(result)
+    assert finding.code == "layout.unsupported.array_instance"
+    assert finding.location == ("cells", "top", "instances", 0)
+    assert detail in finding.message
+
+
 def test_foreign_gds_with_unsupported_constructs_is_refused() -> None:
     def build(ly: kdb.Layout, wg: int) -> None:
         child, top = ly.create_cell("child"), ly.create_cell("top")
@@ -340,7 +431,6 @@ def test_foreign_gds_with_unsupported_constructs_is_refused() -> None:
     assert sorted(codes(result)) == [
         "geometry.unsupported.polygon_holes",  # GDS stores the hole as a zero-width keyhole
         "geometry.unsupported.shape",
-        "layout.unsupported.array_instance",
     ]
 
 

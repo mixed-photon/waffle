@@ -145,6 +145,26 @@ class BBox:
     lo: Point
     hi: Point
 
+    def contains(self, point: Point) -> bool:
+        return all(
+            lo <= coordinate <= hi
+            for lo, coordinate, hi in zip(self.lo, point, self.hi, strict=True)
+        )
+
+    def intersects(self, other: BBox) -> bool:
+        return all(
+            lo <= other_hi and other_lo <= hi
+            for lo, hi, other_lo, other_hi in zip(
+                self.lo, self.hi, other.lo, other.hi, strict=True
+            )
+        )
+
+    def transformed(self, transform: Transform) -> BBox:
+        """Return the bounds under an exact orthogonal transform."""
+        ax, ay = transform.apply(self.lo)
+        bx, by = transform.apply(self.hi)
+        return BBox((min(ax, bx), min(ay, by)), (max(ax, bx), max(ay, by)))
+
     @classmethod
     def of(cls, points: Iterable[Point]) -> BBox | None:
         pts = list(points)

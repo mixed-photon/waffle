@@ -4,8 +4,9 @@ from waffle.contracts.component.definition import Domain
 from waffle.contracts.foundation.records import revision_of
 from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Polygon, Rectangle
+from waffle.contracts.geometry.transform import Transform
 from waffle.contracts.layout.examples import nested_layout
-from waffle.contracts.layout.layout import Cell, Layout, Port
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, Layout, Port
 from waffle.geometry.services.grid import Rounding
 from waffle.layout.services.flatten import flatten
 from waffle.layout.services.physical import to_physical
@@ -78,4 +79,39 @@ def test_collapsing_shapes_and_ports_are_errors() -> None:
     ) == [
         "a rectangle on layer 'WG' collapses on the new grid",
         "port 'p' collapses on the new grid",
+    ]
+
+
+def test_array_steps_are_scaled_exactly_or_snapped() -> None:
+    array = InstanceArray(columns=3, rows=2, column_step=(0, -3), row_step=(6, 0))
+    instance = Instance(name="a", cell="leaf", transform=Transform(translation=(2, 4)), array=array)
+    layout = nested_layout().model_copy(
+        update={"cells": (Cell(name="leaf"), Cell(name="top", instances=(instance,)))}
+    )
+    fine = regrid(layout, HALF_NM).unwrap()
+    assert fine.cells[-1].instances[0].array == InstanceArray(
+        columns=3, rows=2, column_step=(0, -6), row_step=(12, 0)
+    )
+    assert revision_of(regrid(fine, layout.grid).unwrap()) == revision_of(layout)
+    exact = regrid(layout, TWO_NM)
+    assert exact.value is None
+    assert [d.code for d in exact.diagnostics] == ["geometry.grid.off_grid"]
+    snapped = regrid(layout, TWO_NM, Rounding.FLOOR)
+    assert [d.code for d in snapped.diagnostics] == ["geometry.grid.snapped"]
+    assert snapped.unwrap().cells[-1].instances[0].array == InstanceArray(
+        columns=3, rows=2, column_step=(0, -2), row_step=(3, 0)
+    )
+
+
+def test_array_step_that_snaps_to_zero_is_degenerate() -> None:
+    array = InstanceArray(columns=2, rows=1, column_step=(1, 0), row_step=(0, 0))
+    instance = Instance(name="a", cell="leaf", array=array)
+    layout = nested_layout().model_copy(
+        update={"cells": (Cell(name="leaf"), Cell(name="top", instances=(instance,)))}
+    )
+    result = regrid(layout, TWO_NM, Rounding.FLOOR)
+    assert result.value is None
+    assert [(d.code, d.location) for d in result.diagnostics] == [
+        ("geometry.grid.degenerate", ("cells", "top")),
+        ("geometry.grid.snapped", ("cells", "top")),
     ]

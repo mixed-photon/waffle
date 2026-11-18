@@ -11,7 +11,7 @@ from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
 from waffle.contracts.geometry.transform import Transform
 from waffle.contracts.layout.examples import LEAF, MID, TOP, nested_layout
-from waffle.contracts.layout.layout import Cell, Instance, Layout, Port
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, Layout, Port
 
 
 def test_hierarchical_layout_round_trips_through_serialization() -> None:
@@ -21,6 +21,73 @@ def test_hierarchical_layout_round_trips_through_serialization() -> None:
     assert loaded == original
     assert revision_of(loaded) == revision_of(original)
     assert to_canonical_json(loaded) == text
+
+
+def test_single_instances_preserve_the_existing_wire_format_and_revision() -> None:
+    legacy = nested_layout()
+    text = to_canonical_json(legacy)
+    assert '"array"' not in text
+    assert str(revision_of(load_record(text, Layout).unwrap())) == (
+        "layout:nested@sha256:3ee224a741a62a5955da46ac26fda6812a3f3a176779edf9d84ef5864e526cd6"
+    )
+
+
+def test_an_array_round_trips_as_one_compact_instance() -> None:
+    data = json.loads(to_canonical_json(nested_layout()))
+    array = {"columns": 1200, "rows": 1, "column_step": [-40, 0], "row_step": [0, 0]}
+    data["cells"][1]["instances"][0]["array"] = array
+    layout = load_record(data, Layout).unwrap()
+    text = to_canonical_json(layout)
+    assert json.loads(text)["cells"][1]["instances"] == data["cells"][1]["instances"]
+    assert load_record(text, Layout).unwrap() == layout
+    assert revision_of(layout) != revision_of(nested_layout())
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"columns": 0},
+        {"columns": True},
+        {"columns": 2.0},
+        {"columns": 1, "rows": 1, "column_step": (0, 0), "row_step": (0, 0)},
+        {"columns": 1},
+        {"column_step": (0, 0)},
+        {"column_step": (3, 3)},
+        {"column_step": (0, -3)},
+        {"row_step": (0, True)},
+    ],
+)
+def test_invalid_arrays_are_rejected(changes: dict[str, object]) -> None:
+    with pytest.raises(ValueError):
+        InstanceArray.model_validate(
+            {"columns": 2, "rows": 2, "column_step": (3, 0), "row_step": (0, 5), **changes}
+        )
+
+
+def test_instance_placements_use_parent_axis_steps_and_row_major_paths() -> None:
+    transform = Transform(mirror=True, rotation=90, translation=(5, 7))
+    array = InstanceArray(columns=2, rows=3, column_step=(0, -6), row_step=(8, 0))
+    instance = Instance(name="a", cell="leaf", transform=transform, array=array)
+    assert [(path, t.translation) for path, t in instance.placements()] == [
+        ("a/0/0", (5, 7)),
+        ("a/0/1", (5, 1)),
+        ("a/1/0", (13, 7)),
+        ("a/1/1", (13, 1)),
+        ("a/2/0", (21, 7)),
+        ("a/2/1", (21, 1)),
+    ]
+    assert instance.placement(1, 2) == (
+        "a/2/1",
+        Transform(mirror=True, rotation=90, translation=(21, 1)),
+    )
+    with pytest.raises(IndexError):
+        instance.placement(-1, 0)
+    with pytest.raises(IndexError):
+        instance.placement(0, 3)
+    single = Instance(name="a", cell="leaf", transform=transform)
+    assert tuple(single.placements()) == (("a", transform),)
+    with pytest.raises(IndexError):
+        single.placement(1, 0)
 
 
 def test_round_trip_covers_every_shape_type_and_transform() -> None:

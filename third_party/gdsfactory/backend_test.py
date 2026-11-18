@@ -19,7 +19,7 @@ from waffle.contracts.foundation.units import Quantity
 from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.transform import Transform
 from waffle.contracts.layout.examples import nested_layout
-from waffle.contracts.layout.layout import Layout
+from waffle.contracts.layout.layout import InstanceArray, Layout
 from waffle.geometry.services.shapes import to_polygon
 from waffle.layout.backend.conformance import Case, applicable_cases
 from waffle.layout.backend.interface import (
@@ -254,6 +254,104 @@ def test_preserves_hierarchy_layers_ports_and_transforms() -> None:
     assert flat["m1/l1/o1"] == ((101, 10), 270)  # mirror, rotate by 90, move
     assert flat["m2/l1/o2"] == ((-12, 50), 90)  # two mirrors and a half turn
     assert flat["in"] == ((0, 0), 180)
+
+
+def array_layout(array: InstanceArray, transform: Transform) -> Layout:
+    layout = nested_layout()
+    return layout.model_copy(
+        update={
+            "cells": tuple(
+                cell
+                if cell.name != layout.top
+                else cell.model_copy(
+                    update={
+                        "instances": tuple(
+                            instance.model_copy(update={"array": array, "transform": transform})
+                            if instance.name == "m1"
+                            else instance
+                            for instance in cell.instances
+                        )
+                    }
+                )
+                for cell in layout.cells
+            )
+        }
+    )
+
+
+@pytest.mark.parametrize(("columns", "rows"), [(2, 3), (1, 3), (2, 1)])
+def test_gds_retains_compact_mirrored_rotated_arrays_and_member_ports(
+    columns: int, rows: int
+) -> None:
+    array = InstanceArray(
+        columns=columns,
+        rows=rows,
+        column_step=(0, -40) if columns > 1 else (0, 0),
+        row_step=(-60, 0) if rows > 1 else (0, 0),
+    )
+    transform = Transform(rotation=270, mirror=True, translation=(100, 0))
+    layout = array_layout(array, transform)
+    package = export_package(BACKEND, layout).unwrap()
+    ly, _ = gds_layers(package.gds)
+    refs = list(ly.top_cell().each_inst())
+    assert len(refs) == 2
+    (repeated,) = [ref for ref in refs if ref.is_regular_array()]
+    assert repeated.property(0) == "m1"
+    assert repeated.size() == rows * columns
+
+    result = BACKEND.import_gds(package.gds, ImportRequest(sidecar=package.sidecar))
+    imported = result.unwrap()
+    assert result.diagnostics == ()
+    assert compare_layouts(layout, imported) == []
+    assert BACKEND.export_gds(imported).unwrap() == package.gds
+    found = {q.path: (q.port.center, q.port.orientation) for q in flatten(imported).unwrap().ports}
+    assert found[f"m1/{rows - 1}/{columns - 1}/l1/o1"] == (
+        (101 - (rows - 1) * 60, -10 - (columns - 1) * 40),
+        90,
+    )
+    assert found["m1/0/0/l1/o1"] == ((101, -10), 90)
+    assert "m2/l1/o1" in found
+
+
+def test_maximum_gds_array_count_roundtrips_without_expansion() -> None:
+    array = InstanceArray(columns=32767, rows=1, column_step=(40, 0), row_step=(0, 0))
+    layout = array_layout(array, Transform())
+    package = export_package(BACKEND, layout).unwrap()
+    imported = BACKEND.import_gds(package.gds, ImportRequest(sidecar=package.sidecar)).unwrap()
+    assert compare_layouts(layout, imported) == []
+
+
+@pytest.mark.parametrize(
+    ("columns", "column_step", "translation", "detail"),
+    [
+        (32768, (40, 0), (0, 0), "32767"),
+        (2, (-40, 0), (0, 0), "local +X"),
+        (2, (0, 40), (0, 0), "local +X"),
+        (2, (2**30, 0), (-(2**30), 0), "signed 32-bit"),
+        (2, (10, 0), (2**31 - 16, 0), "signed 32-bit"),
+    ],
+)
+def test_export_refuses_arrays_that_would_change_member_identity_or_overflow(
+    columns: int, column_step: tuple[int, int], translation: tuple[int, int], detail: str
+) -> None:
+    array = InstanceArray(columns=columns, rows=1, column_step=column_step, row_step=(0, 0))
+    layout = array_layout(array, Transform(translation=translation))
+    result = BACKEND.export_gds(layout)
+    assert result.value is None
+    (finding,) = result.diagnostics
+    assert finding.code == "layout.unsupported.array_instance"
+    assert finding.location == ("cells", "top", "instances", "m1")
+    assert detail in finding.message
+
+
+def test_polygon_merge_keeps_noncanonical_array_axes() -> None:
+    array = InstanceArray(columns=3, rows=2, column_step=(0, -40), row_step=(60, 0))
+    transform = Transform(translation=(100, 0))
+    layout = array_layout(array, transform)
+    merged = BACKEND.merge(layout).unwrap()
+    assert {cell.name: cell.instances for cell in merged.cells} == {
+        cell.name: cell.instances for cell in layout.cells
+    }
 
 
 def test_composite_with_mirrored_instance_preserves_everything() -> None:

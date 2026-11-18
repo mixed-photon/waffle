@@ -6,7 +6,7 @@ from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
 from waffle.contracts.geometry.transform import Transform
 from waffle.contracts.layout.examples import LAYERS, LEAF, nested_layout
-from waffle.contracts.layout.layout import Cell, Instance, LayerSpec, Layout, Port
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, LayerSpec, Layout, Port
 from waffle.layout.services.validate import find_cycles, validate_layout
 
 BASE = nested_layout()
@@ -140,4 +140,22 @@ def test_points_must_be_on_the_manufacturing_grid() -> None:
     ] == [
         ("instances", "i"),
         ("ports", "p"),
+    ]
+
+
+def test_array_steps_must_be_on_the_manufacturing_grid() -> None:
+    array = InstanceArray(columns=2, rows=3, column_step=(0, -3), row_step=(5, 0))
+    layout = variant(
+        grid=Grid(dbu_pm=1000, manufacturing=2),
+        cells=(
+            Cell(name="leaf"),
+            Cell(name="top", instances=(Instance(name="a", cell="leaf", array=array),)),
+        ),
+    )
+    assert [(d.code, d.location) for d in validate_layout(layout)] == [
+        (
+            "layout.grid.off_manufacturing",
+            ("cells", "top", "instances", "a", "array", "column_step"),
+        ),
+        ("layout.grid.off_manufacturing", ("cells", "top", "instances", "a", "array", "row_step")),
     ]

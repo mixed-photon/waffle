@@ -22,7 +22,7 @@ class FlatCell:
     `polygons` maps logical layer names to polygons (rectangles and paths expanded),
     sorted; overlapping polygons are kept as they are, not merged. `ports` holds every port
     of the cell and of every nested instance, sorted by path (`name` for the cell's own
-    ports, `inst/name` and deeper `a/b/name` for instance ports).
+    ports, `inst/name` for instance ports, and `inst/row/column/name` for array copies).
     """
 
     cell: str
@@ -66,7 +66,8 @@ def flatten(layout: Layout, cell: str | None = None) -> Result[FlatCell]:
             QualifiedPort(prefix + p.name, p.transformed(transform)) for p in current.ports
         )
         for instance in current.instances:
-            walk(instance.cell, transform.compose(instance.transform), f"{prefix}{instance.name}/")
+            for path, placement in instance.placements():
+                walk(instance.cell, transform.compose(placement), f"{prefix}{path}/")
 
     walk(name, Transform(), "")
     return Result.of(

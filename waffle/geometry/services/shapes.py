@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from waffle.contracts.foundation.diagnostics import Diagnostic, Severity
 from waffle.contracts.foundation.result import Result
-from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
+from waffle.contracts.geometry.shapes import BBox, Path, Polygon, Rectangle
 from waffle.contracts.geometry.transform import Point
 from waffle.contracts.geometry.unsupported import Unsupported, unsupported
 
@@ -116,6 +116,30 @@ def _segments_meet(a: Point, b: Point, c: Point, d: Point) -> bool:
         or (s3 == 0 and _within(c, d, a))
         or (s4 == 0 and _within(c, d, b))
     )
+
+
+def polygon_intersects_box(polygon: Polygon, box: BBox) -> bool:
+    """Test a simple polygon against a closed box in integer database units."""
+    points = polygon.points
+    if any(box.contains(point) for point in points):
+        return True
+
+    edges = tuple(zip(points, (*points[1:], points[0]), strict=True))
+    (x0, y0), (x1, y1) = box.lo, box.hi
+    corners = (box.lo, (x1, y0), box.hi, (x0, y1))
+    box_edges = tuple(zip(corners, (*corners[1:], corners[0]), strict=True))
+    if any(_segments_meet(a, b, c, d) for a, b in edges for c, d in box_edges):
+        return True
+
+    # With no boundary intersections, the box is either entirely inside or outside.
+    # Count crossings of the horizontal ray to the right of its lower-left corner.
+    crossings = sum(
+        1
+        for a, b in edges
+        if (a[1] > y0) != (b[1] > y0)
+        and _side(a, b, box.lo) == (1 if b[1] > a[1] else -1)
+    )
+    return crossings % 2 == 1
 
 
 def is_simple(polygon: Polygon) -> bool:

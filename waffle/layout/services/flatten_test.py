@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from waffle.contracts.component.definition import Domain
 from waffle.contracts.geometry.shapes import BBox
-from waffle.contracts.layout.examples import nested_layout
-from waffle.contracts.layout.layout import Cell, Instance
+from waffle.contracts.layout.examples import LEAF, MID, TOP, nested_layout
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray
 from waffle.layout.services.flatten import flatten
 from waffle.layout.services.physical import to_physical
 
@@ -49,6 +49,22 @@ def test_port_identity_survives_flattening() -> None:
             leaf_o1.width,
         )
     assert by_path["m1/e1"].domain is Domain.ELECTRICAL
+
+
+def test_array_paths_and_placements_compose_with_nested_transforms() -> None:
+    array = InstanceArray(columns=2, rows=2, column_step=(0, -6), row_step=(12, 0))
+    mid = MID.model_copy(
+        update={"instances": (MID.instances[0].model_copy(update={"array": array}),)}
+    )
+    layout = nested_layout().model_copy(update={"cells": (LEAF, mid, TOP)})
+    flat = flatten(layout).unwrap()
+    assert len(flat.polygons["WG"]) == 8
+    assert tuple(p.path for p in flat.ports) == tuple(sorted(p.path for p in flat.ports))
+    ports = {p.path: (p.port.center, p.port.orientation) for p in flat.ports}
+    assert ports["m1/l1/1/1/o1"] == ((107, 22), 270)
+    assert ports["m2/l1/1/1/o1"] == ((-22, 43), 0)
+    assert ports["m1/l1/1/0/o2"] == ((100, 24), 180)
+    assert ports["m1/e1"] == ((98, 20), 90)
 
 
 def test_flatten_a_sub_cell_uses_its_own_frame() -> None:

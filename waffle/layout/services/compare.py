@@ -7,7 +7,7 @@ compared as multisets of exact rings; overlapping or abutting polygons are not m
 rectangle split in two differs from the whole.
 
 * `HIERARCHICAL`: same layer table, top name, cell names, and per cell the same shapes,
-  instances (name, child cell, transform), and ports.
+  instances (name, child cell, transform, array), and ports.
 * `FLAT`: same layer table and the same flattened per-layer polygons and port paths and
   fields of the two top cells, whatever the hierarchy and cell or instance names inside.
 """
@@ -87,8 +87,8 @@ def _compare_cell(a: Cell, b: Cell) -> list[Diagnostic]:
     found += _compare_keyed(
         "layout.diff.instance",
         "instance",
-        {i.name: (i.cell, i.transform) for i in a.instances},
-        {i.name: (i.cell, i.transform) for i in b.instances},
+        {i.name: (i.cell, i.transform, i.array) for i in a.instances},
+        {i.name: (i.cell, i.transform, i.array) for i in b.instances},
         (*here, "instances"),
     )
     found += _compare_keyed(

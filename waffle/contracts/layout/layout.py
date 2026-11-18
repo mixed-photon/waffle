@@ -12,9 +12,18 @@ name; shapes by `shape_key`), so equal layouts serialize identically and share a
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from collections.abc import Iterator
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from waffle.contracts.component.definition import Domain
 from waffle.contracts.foundation.records import Record
@@ -62,14 +71,76 @@ class Port(BaseModel):
         )
 
 
+class InstanceArray(BaseModel):
+    """A rectangular array with signed step vectors in the parent frame, in dbu."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    columns: StrictInt = Field(ge=1)
+    rows: StrictInt = Field(ge=1)
+    column_step: Point
+    row_step: Point
+
+    @model_validator(mode="after")
+    def _validate_steps(self) -> Self:
+        if self.columns == self.rows == 1:
+            raise ValueError("an instance array must contain more than one placement")
+        for axis, count, (x, y) in (
+            ("column", self.columns, self.column_step),
+            ("row", self.rows, self.row_step),
+        ):
+            if count == 1:
+                if x or y:
+                    raise ValueError(f"{axis} step must be zero when its count is one")
+            elif bool(x) == bool(y):
+                raise ValueError(f"{axis} step must be a nonzero Manhattan vector")
+        cx, cy = self.column_step
+        rx, ry = self.row_step
+        if cx * rx + cy * ry:
+            raise ValueError("column and row steps must be perpendicular")
+        return self
+
+
 class Instance(BaseModel):
-    """One placement of the cell named `cell`; `transform` maps child to parent frame."""
+    """A cell reference whose `transform` maps the first copy from child to parent."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     name: Name
     cell: Name
     transform: Transform = Transform()
+    # Keep the published wire representation of ordinary instances unchanged.
+    array: InstanceArray | None = Field(default=None, exclude_if=lambda array: array is None)
+
+    def placement(self, column: int, row: int) -> tuple[str, Transform]:
+        """Return the path and child-to-parent transform at zero-based indices."""
+        if type(column) is not int or type(row) is not int:
+            raise TypeError("instance placement indices must be integers")
+        array = self.array
+        if array is None:
+            if (column, row) != (0, 0):
+                raise IndexError("single instance placement indices must both be zero")
+            return (self.name, self.transform)
+        if not (0 <= column < array.columns and 0 <= row < array.rows):
+            raise IndexError("instance array placement indices out of range")
+        x, y = self.transform.translation
+        cx, cy = array.column_step
+        rx, ry = array.row_step
+        translation = (x + column * cx + row * rx, y + column * cy + row * ry)
+        return (
+            f"{self.name}/{row}/{column}",
+            self.transform.model_copy(update={"translation": translation}),
+        )
+
+    def placements(self) -> Iterator[tuple[str, Transform]]:
+        """Yield placements in row-major order."""
+        array = self.array
+        if array is None:
+            yield self.placement(0, 0)
+            return
+        for row in range(array.rows):
+            for column in range(array.columns):
+                yield self.placement(column, row)
 
 
 class Cell(BaseModel):

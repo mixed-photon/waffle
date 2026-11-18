@@ -5,7 +5,7 @@ from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
 from waffle.contracts.geometry.transform import Transform
 from waffle.contracts.layout.examples import LEAF, MID, TOP, nested_layout
-from waffle.contracts.layout.layout import Cell, Instance, LayerSpec, Layout
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, LayerSpec, Layout
 from waffle.layout.services.compare import CompareMode, compare_layouts
 from waffle.layout.services.regrid import regrid
 
@@ -114,6 +114,19 @@ def test_structural_differences() -> None:
     )
     for mode in CompareMode:
         assert codes((BASE, remapped), mode) == ["layout.diff.layer"]
+
+
+def test_changed_array_step_is_visible_in_both_comparison_modes() -> None:
+    def with_step(step: int) -> Layout:
+        array = InstanceArray(columns=2, rows=1, column_step=(step, 0), row_step=(0, 0))
+        instance = MID.instances[0].model_copy(update={"array": array})
+        return replace_cell(BASE, MID.model_copy(update={"instances": (instance,)}))
+
+    first, second = with_step(10), with_step(20)
+    assert [(d.code, d.location) for d in compare_layouts(first, second)] == [
+        ("layout.diff.instance", ("cells", "mid", "instances", "l1"))
+    ]
+    assert set(codes((first, second), FLAT)) == {"layout.diff.port", "layout.diff.shapes"}
 
 
 def test_different_database_units_are_reported_before_anything_else() -> None:

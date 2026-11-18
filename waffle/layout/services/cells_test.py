@@ -10,7 +10,7 @@ from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Polygon
 from waffle.contracts.geometry.transform import Orientation, Transform
 from waffle.contracts.layout.examples import LAYERS, LEAF, MID, nested_layout
-from waffle.contracts.layout.layout import Cell, Instance, Layout, Port
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, Layout, Port
 from waffle.layout.services.cells import instance_ports, transform_cell
 from waffle.layout.services.flatten import flatten
 
@@ -57,6 +57,34 @@ def test_transforming_a_cell_is_the_same_as_transforming_its_flattening() -> Non
         for layer, polys in before.polygons.items()
     }
     assert {k: list(v) for k, v in after.polygons.items()} == expected
+
+
+def test_transforming_array_instances_moves_each_copy_and_keeps_port_paths() -> None:
+    instance = Instance(
+        name="a",
+        cell="leaf",
+        transform=Transform(mirror=True, rotation=90, translation=(10, -3)),
+        array=InstanceArray(columns=2, rows=3, column_step=(0, 20), row_step=(-10, 0)),
+    )
+    parent = Cell(name="parent", instances=(instance,))
+    layout = nested_layout()
+    before = instance_ports(layout, instance).unwrap()
+    assert [port.path for port in before if port.port.name == "o1"] == [
+        "a/0/0/o1",
+        "a/0/1/o1",
+        "a/1/0/o1",
+        "a/1/1/o1",
+        "a/2/0/o1",
+        "a/2/1/o1",
+    ]
+    for mirror, rotation in ORIENTATIONS:
+        transform = Transform(mirror=mirror, rotation=rotation, translation=(31, -17))
+        moved = transform_cell(parent, transform)
+        after = instance_ports(layout, moved.instances[0]).unwrap()
+        assert [(q.path, q.port) for q in after] == [
+            (q.path, q.port.transformed(transform)) for q in before
+        ]
+        assert transform_cell(moved, transform.inverse()) == parent
 
 
 def test_port_identity_survives_instantiation_in_all_eight_orientations() -> None:

@@ -41,7 +41,7 @@ def _xy(points: list[Point]) -> bytes:
 
 
 def gds_bytes(layout: Layout) -> bytes:
-    """A GDSII stream of `layout`'s structure (instances of undefined cells are kept)."""
+    """A GDSII stream of `layout`'s structure, supporting single references."""
     pairs = {spec.name: (spec.layer, spec.datatype) for spec in layout.layers}
     dbu_um = layout.grid.dbu_pm / 1e6
     out = [
@@ -64,6 +64,8 @@ def gds_bytes(layout: Layout) -> bytes:
                     _record(0x11, 0),
                 ]
         for inst in cell.instances:
+            if inst.array is not None:
+                raise ValueError("gds_bytes supports single references only")
             t = inst.transform
             out += [_record(0x0A, 0), _record(0x12, 6, _name(inst.cell))]
             if t.mirror or t.rotation:

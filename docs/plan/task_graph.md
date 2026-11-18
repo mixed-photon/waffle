@@ -1,4 +1,4 @@
-# Task dependency graph (MOD-001 to MOD-020)
+# Task dependency graph (MOD-001 to MOD-021)
 
 Dependencies are those stated in `implementation_plan.md`. The native (NAT) and
 large-deployment (SCALE) tracks start after the interfaces below exist and are
@@ -14,6 +14,8 @@ graph TD
   MOD004 --> MOD005
   MOD003 --> MOD006
   MOD004 --> MOD006
+  MOD005 --> MOD021
+  MOD006 --> MOD021
   MOD004 --> MOD007
   MOD006 --> MOD007
   MOD003 --> MOD009
@@ -60,6 +62,7 @@ start early on its own dependencies without waiting for the whole previous wave.
 | MOD-005 | 002, 004 | 3 | `//third_party/gdsfactory` (adapter, worker), `//waffle/layout/{services,formats}` |
 | MOD-006 | 003, 004 | 3 | `//waffle/technology`, `//waffle/contracts/physics`, `//waffle/geometry/services` |
 | MOD-007 | 004, 006 | 4 | `//waffle/design/mappings` |
+| MOD-021 | 005, 006 | 4 | `//waffle/contracts/layout`, `//waffle/layout/services`, `//waffle/geometry/services`, `//third_party/gdsfactory`, `//waffle/simulation/common` |
 | MOD-009 | 003, 007 | 5 | `//waffle/models`, `//waffle/contracts/models` |
 | MOD-015 | 007, 008 | 5 | `//waffle/experiments` (datasets), `//waffle/contracts/results` |
 | MOD-010 | 008, 009 | 6 | `//waffle/experiments`, `//waffle/workflows` |

@@ -5,8 +5,8 @@ and the output of geometry operations. Every cell of the klayout layout is conve
 `top` only names the layout's top cell. Whatever the IR cannot express is reported, never
 dropped, with the shared codes of `waffle.contracts.geometry.unsupported` and `BackendCode`:
 
-* array instances, instances that are rotated by other than a multiple of 90 degrees or
-  magnified (`ICplxTrans` angles within 1e-6 degrees of a multiple of 90 and magnifications
+* nonrectangular array instances, instances rotated by other than a multiple of 90 degrees
+  or magnified (`ICplxTrans` angles within 1e-6 degrees of a multiple of 90 and magnifications
   within 1e-9 of 1 are accepted as exact), polygons with holes (including the zero-width
   keyholes GDS uses for them), round paths and paths with other end styles, text and other
   non-polygon shapes, geometry on a GDS layer the layer table lacks, degenerate shapes, and
@@ -33,15 +33,23 @@ import kfactory as kf
 import klayout.db as kdb
 from pydantic import ValidationError
 
-from third_party.gdsfactory.gds import INSTANCE_NAME_KEY
+from third_party.gdsfactory.gds import INSTANCE_NAME_KEY, canonical_array
 from waffle.contracts.component.definition import Domain
 from waffle.contracts.foundation.diagnostics import Diagnostic, Severity
 from waffle.contracts.foundation.identity import EntityId
 from waffle.contracts.foundation.result import Result
 from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
+from waffle.contracts.geometry.transform import Point, Transform
 from waffle.contracts.geometry.unsupported import Unsupported, unsupported
-from waffle.contracts.layout.layout import Cell, Instance, LayerSpec, Layout, Port
+from waffle.contracts.layout.layout import (
+    Cell,
+    Instance,
+    InstanceArray,
+    LayerSpec,
+    Layout,
+    Port,
+)
 from waffle.geometry.services.transforms import manhattan_angle, transform_from_parts
 from waffle.layout.backend.interface import BackendCode, diagnostic
 from waffle.layout.services.validate import validate_layout
@@ -51,6 +59,7 @@ MAGNIFICATION_TOLERANCE = 1e-9
 _ILLEGAL = re.compile(r"[^A-Za-z0-9_.$\-]")
 _DOMAINS = {"optical": Domain.OPTICAL, "electrical": Domain.ELECTRICAL}
 Location = tuple[str | int, ...]
+_Placement = tuple[str, str | None, Transform, InstanceArray | None]
 
 
 def clean_name(original: str) -> str:
@@ -72,11 +81,13 @@ class _Converter:
         layout_id: EntityId,
         layers: Sequence[LayerSpec],
         ports: Mapping[str, Sequence[Port]],
+        gds_arrays: bool,
     ) -> None:
         self.ly = ly
         self.subject = str(layout_id)
         self.pairs = {(spec.layer, spec.datatype): spec.name for spec in layers}
         self.ports = ports
+        self.gds_arrays = gds_arrays
         self.found: list[Diagnostic] = []
         self.metadata: dict[str, str] = {}
         self._grouped: Counter[Diagnostic] = Counter()
@@ -179,20 +190,10 @@ class _Converter:
         return None
 
     def instances(self, cell: kdb.Cell, name: str) -> list[Instance]:
-        placed: list[tuple[str, str | None, object]] = []  # (child, explicit name, transform)
+        placed: list[_Placement] = []
         for index, inst in enumerate(cell.each_inst()):
             where: Location = ("cells", name, "instances", index)
             child = self.cell_names[inst.cell.name]
-            if inst.is_regular_array():
-                self.report(
-                    unsupported(
-                        Unsupported.ARRAY_INSTANCE,
-                        f"{inst.na}x{inst.nb} array of {child!r}",
-                        subject=self.subject,
-                        location=where,
-                    )
-                )
-                continue
             ct = inst.cplx_trans
             mag = 1.0 if abs(ct.mag - 1.0) <= MAGNIFICATION_TOLERANCE else ct.mag
             transform = transform_from_parts(
@@ -207,17 +208,60 @@ class _Converter:
                 for finding in transform.diagnostics:
                     self.report(finding)
                 continue
-            explicit = inst.property(INSTANCE_NAME_KEY)
-            placed.append((child, explicit if isinstance(explicit, str) else None, transform.value))
+            try:
+                array = self._array(inst)
+            except ValidationError as exc:
+                self.report(
+                    unsupported(
+                        Unsupported.ARRAY_INSTANCE,
+                        f"array of {child!r}: {exc.errors()[0]['msg']}",
+                        subject=self.subject,
+                        location=where,
+                    )
+                )
+                continue
+            placement = transform.value
+            if self.gds_arrays and array is not None:
+                canonical = canonical_array(array, placement)
+                if canonical != (array, placement):
+                    self.found.append(
+                        diagnostic(
+                            "layout.backend.array_normalized",
+                            "array indices reordered to follow child-local +X columns and +Y rows",
+                            severity=Severity.INFO,
+                            subject=self.subject,
+                            location=where,
+                        )
+                    )
+                array, placement = canonical
+            prop = inst.property(INSTANCE_NAME_KEY)
+            explicit = prop if isinstance(prop, str) else None
+            placed.append((child, explicit, placement, array))
         return self._named(name, placed)
 
-    def _named(self, cell: str, placed: list[tuple[str, str | None, object]]) -> list[Instance]:
+    def _array(self, inst: kdb.Instance) -> InstanceArray | None:
+        if not inst.is_regular_array() or inst.na == inst.nb == 1:
+            return None
+        # The GDS reader maps wire columns to b and rows to a.
+        if self.gds_arrays:
+            columns, col, rows, row = inst.nb, inst.b, inst.na, inst.a
+        else:
+            columns, col, rows, row = inst.na, inst.a, inst.nb, inst.b
+        return InstanceArray(
+            columns=columns,
+            rows=rows,
+            column_step=(col.x, col.y) if columns > 1 else (0, 0),
+            row_step=(row.x, row.y) if rows > 1 else (0, 0),
+        )
+
+    def _named(self, cell: str, placed: list[_Placement]) -> list[Instance]:
         used: set[str] = set()
         out: list[Instance] = []
-        unnamed = []
-        for child, explicit, transform in placed:
+        unnamed: list[_Placement] = []
+        for item in placed:
+            child, explicit, transform, array = item
             if explicit is None:
-                unnamed.append((child, transform))
+                unnamed.append(item)
                 continue
             cleaned = self.name("instance", explicit, f"{cell}.")
             if cleaned in used:
@@ -230,7 +274,7 @@ class _Converter:
                     )
                 )
             used.add(cleaned)
-            out.append(Instance(name=cleaned, cell=child, transform=transform))
+            out.append(Instance(name=cleaned, cell=child, transform=transform, array=array))
         if unnamed:
             self.found.append(
                 diagnostic(
@@ -242,14 +286,25 @@ class _Converter:
                 )
             )
         counters: Counter[str] = Counter()
-        key = lambda item: (item[0], item[1].mirror, item[1].rotation, item[1].translation)  # noqa: E731
-        for child, transform in sorted(unnamed, key=key):
+        for child, _, transform, array in sorted(unnamed, key=_placement_key):
             counters[child] += 1
             while (candidate := f"{child}_{counters[child]}") in used:
                 counters[child] += 1
             used.add(candidate)
-            out.append(Instance(name=candidate, cell=child, transform=transform))
+            out.append(Instance(name=candidate, cell=child, transform=transform, array=array))
         return out
+
+
+def _placement_key(
+    item: _Placement,
+) -> tuple[str, bool, int, Point, tuple[int, int, Point, Point]]:
+    child, _, transform, array = item
+    axes = (
+        (0, 0, (0, 0), (0, 0))
+        if array is None
+        else (array.columns, array.rows, array.column_step, array.row_step)
+    )
+    return (child, transform.mirror, transform.rotation, transform.translation, axes)
 
 
 def layout_from_klayout(
@@ -261,14 +316,16 @@ def layout_from_klayout(
     top: str | None,
     ports: Mapping[str, Sequence[Port]],
     metadata: Mapping[str, str] | None = None,
+    gds_arrays: bool = False,
 ) -> Result[Layout]:
     """The IR of every cell in `ly`, or the diagnostics saying what cannot be expressed.
 
     `grid` must match the klayout database unit; `ports` maps klayout cell names to their
     ports (klayout has none); `top` is the top cell's klayout name, defaulting to the only
-    cell no other cell references. The result passes `validate_layout`.
+    cell no other cell references. Set `gds_arrays` when the layout was read from GDS to
+    recover wire axis order and canonicalize array indices. The result passes `validate_layout`.
     """
-    converter = _Converter(ly, layout_id, layers, ports)
+    converter = _Converter(ly, layout_id, layers, ports, gds_arrays)
     subject = converter.subject
     if abs(ly.dbu * 1e6 - grid.dbu_pm) > 1e-6:
         return Result(

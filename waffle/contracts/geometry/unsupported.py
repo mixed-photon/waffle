@@ -31,7 +31,7 @@ _SUMMARY: dict[Unsupported, str] = {
     Unsupported.PATH_SEGMENT: "path segments must be horizontal or vertical",
     Unsupported.ROTATION: "only rotations by multiples of 90 degrees are supported",
     Unsupported.MAGNIFICATION: "magnification other than 1 is not supported",
-    Unsupported.ARRAY_INSTANCE: "array instances (AREF) are not supported; expand them upstream",
+    Unsupported.ARRAY_INSTANCE: "array instance is outside the supported repetition subset",
     Unsupported.EXTERNAL_REFERENCE: "instances must reference a cell in the same layout",
 }
 

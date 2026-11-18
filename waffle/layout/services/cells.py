@@ -15,11 +15,27 @@ class QualifiedPort:
     """A port reached through a path of instance names, e.g. `m1/l1/o1`.
 
     `port` is expressed in the frame where the path starts; its `name` is the leaf name.
-    A top-level port's path is just its name.
+    A top-level port's path is just its name. Array instance paths include the row and
+    column indices, e.g. `m1/l1/0/1/o1`.
     """
 
     path: str
     port: Port
+
+
+def _transform_instance(instance: Instance, transform: Transform) -> Instance:
+    array = instance.array
+    if array is not None:
+        linear = Transform(mirror=transform.mirror, rotation=transform.rotation)
+        array = array.model_copy(
+            update={
+                "column_step": linear.apply(array.column_step),
+                "row_step": linear.apply(array.row_step),
+            }
+        )
+    return instance.model_copy(
+        update={"transform": transform.compose(instance.transform), "array": array}
+    )
 
 
 def transform_cell(cell: Cell, transform: Transform) -> Cell:
@@ -30,16 +46,13 @@ def transform_cell(cell: Cell, transform: Transform) -> Cell:
             layer: tuple(shape.transformed(transform) for shape in shapes)
             for layer, shapes in cell.shapes.items()
         },
-        instances=tuple(
-            i.model_copy(update={"transform": transform.compose(i.transform)})
-            for i in cell.instances
-        ),
+        instances=tuple(_transform_instance(i, transform) for i in cell.instances),
         ports=tuple(p.transformed(transform) for p in cell.ports),
     )
 
 
 def instance_ports(layout: Layout, instance: Instance) -> Result[tuple[QualifiedPort, ...]]:
-    """The child cell's own ports in the parent's frame, named `<instance>/<port>`."""
+    """The child cell's own ports in the parent's frame at every placement."""
     child = next((c for c in layout.cells if c.name == instance.cell), None)
     if child is None:
         return Result(
@@ -54,9 +67,12 @@ def instance_ports(layout: Layout, instance: Instance) -> Result[tuple[Qualified
                 ),
             ),
         )
+    if not child.ports:
+        return Result.of(())
     return Result.of(
         tuple(
-            QualifiedPort(f"{instance.name}/{p.name}", p.transformed(instance.transform))
+            QualifiedPort(f"{path}/{p.name}", p.transformed(transform))
+            for path, transform in instance.placements()
             for p in child.ports
         )
     )

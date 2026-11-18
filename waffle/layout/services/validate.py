@@ -105,6 +105,17 @@ def validate_layout(layout: Layout, *, check_simple: bool = True) -> list[Diagno
                 error("layout.instance.unknown_cell", f"unknown cell {instance.cell!r}", at)
             if not all(grid.on_manufacturing(v) for v in instance.transform.translation):
                 error("layout.grid.off_manufacturing", "translation is off the grid", at)
+            if instance.array is not None:
+                for key, step in (
+                    ("column_step", instance.array.column_step),
+                    ("row_step", instance.array.row_step),
+                ):
+                    if not all(grid.on_manufacturing(v) for v in step):
+                        error(
+                            "layout.grid.off_manufacturing",
+                            f"{key} is off the grid",
+                            (*at, "array", key),
+                        )
 
         for name, count in Counter(p.name for p in cell.ports).items():
             if count > 1:

@@ -33,7 +33,14 @@ from waffle.layout.formats.sidecar import Producer, verify_sidecar
 from waffle.layout.services.validate import validate_layout
 from third_party.gdsfactory import geometry
 from third_party.gdsfactory.convert import kfactory_ports, layout_from_klayout
-from third_party.gdsfactory.gds import oversized_polygons, read_bytes, to_klayout, write_bytes
+from third_party.gdsfactory.gds import (
+    export_array_problems,
+    import_array_problems,
+    oversized_polygons,
+    read_bytes,
+    to_klayout,
+    write_bytes,
+)
 from third_party.gdsfactory.generators import (
     GENERATORS,
     LAYER,
@@ -148,6 +155,8 @@ class GdsfactoryBackend:
         problems = validate_layout(layout)
         if has_errors(problems):
             return Result(None, tuple(problems))
+        if array_problems := export_array_problems(layout):
+            return Result(None, tuple(array_problems))
         ly = to_klayout(layout)
         if oversized := oversized_polygons(ly):
             return Result(None, tuple(oversized))
@@ -169,6 +178,8 @@ class GdsfactoryBackend:
             )
         if has_errors(found) or stream.value is None:
             return Result(None, tuple(found))
+        if array_problems := import_array_problems(data, subject=str(request.result_id)):
+            return Result(None, (*found, *array_problems))
         ly = read_bytes(data)
         if ly.value is None:
             return Result(None, ly.diagnostics)
@@ -180,6 +191,7 @@ class GdsfactoryBackend:
             layers=request.table,
             top=request.top or (sidecar.top if sidecar else None),
             ports={item.cell: item.ports for item in sidecar.ports} if sidecar else {},
+            gds_arrays=True,
         )
         if sidecar is None:
             found.append(

@@ -7,8 +7,8 @@ import pytest
 from waffle.contracts.foundation.diagnostics import has_errors
 from waffle.contracts.foundation.identity import EntityId
 from waffle.contracts.foundation.records import revision_of
-from waffle.contracts.technology.pdk import Pdk
-from waffle.pdk.directory import write_pdk
+from waffle.contracts.technology.pdk import Access, Pdk
+from waffle.pdk.directory import validate_pdk_directory, write_pdk
 from waffle.pdk.testing.synthetic import TECHNOLOGY_ID, synthetic_soi, synthetic_soi_pdk
 from waffle.technology.registry import ENTRY_POINT_GROUP, PdkRegistry
 
@@ -65,20 +65,45 @@ def test_default_discovery_uses_installed_entry_points_without_error() -> None:
     assert PdkRegistry().discover() == []  # nothing installed advertises waffle.pdks here
 
 
-def test_directory_route_gives_the_same_result_as_the_entry_point_route(tmp_path: Path) -> None:
-    assert write_pdk(synthetic_soi_pdk(), tmp_path / "pdk") == []
+@pytest.mark.parametrize("access", list(Access))
+def test_directory_route_gives_the_same_result_as_the_entry_point_route(
+    tmp_path: Path, access: Access
+) -> None:
+    synthetic = synthetic_soi_pdk()
+    pdk = Pdk(
+        manifest=synthetic.manifest.model_copy(update={"access": access}),
+        technologies=synthetic.technologies,
+    )
+    directory = tmp_path / "pdk"
+    assert write_pdk(pdk, directory) == []
+    assert validate_pdk_directory(directory, "0.0.0") == []
+
     from_directory = PdkRegistry(waffle_version="0.0.0")
-    assert from_directory.add_directory(tmp_path / "pdk") == []
     from_entry_point = PdkRegistry(waffle_version="0.0.0")
-    from_entry_point.discover([FakeEntryPoint("s", synthetic_soi_pdk)])
-    assert from_directory.pdks == from_entry_point.pdks
+    assert from_directory.add_directory(directory) == []
+    assert from_entry_point.discover([FakeEntryPoint("s", lambda: pdk)]) == []
+
+    (ref,) = pdk.manifest.technologies
+    for registry in (from_directory, from_entry_point):
+        assert registry.pdks == (pdk,)
+        assert registry.pdks[0].manifest.access is access
+        assert registry.revisions(TECHNOLOGY_ID) == (ref,)
+        assert registry.resolve(ref).unwrap() == synthetic_soi()
 
 
-def test_incompatible_waffle_version_is_refused_for_both_routes(tmp_path: Path) -> None:
-    write_pdk(synthetic_soi_pdk(), tmp_path / "pdk")  # requires >=0.0.0,<1.0.0
+@pytest.mark.parametrize("access", list(Access))
+def test_incompatible_waffle_version_is_refused_for_both_routes(
+    tmp_path: Path, access: Access
+) -> None:
+    synthetic = synthetic_soi_pdk()
+    pdk = Pdk(
+        manifest=synthetic.manifest.model_copy(update={"access": access}),
+        technologies=synthetic.technologies,
+    )
+    assert write_pdk(pdk, tmp_path / "pdk") == []  # requires >=0.0.0,<1.0.0
     registry = PdkRegistry(waffle_version="1.2.0")
     assert codes(registry.add_directory(tmp_path / "pdk")) == ["pdk.incompatible_waffle"]
-    assert codes(registry.discover([FakeEntryPoint("s", synthetic_soi_pdk)])) == [
+    assert codes(registry.discover([FakeEntryPoint("s", lambda: pdk)])) == [
         "pdk.incompatible_waffle"
     ]
     assert registry.pdks == ()

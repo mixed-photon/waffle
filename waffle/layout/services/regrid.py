@@ -11,7 +11,7 @@ from waffle.contracts.foundation.result import Result
 from waffle.contracts.geometry.grid import Grid
 from waffle.contracts.geometry.shapes import Path, Polygon, Rectangle
 from waffle.contracts.geometry.transform import Point
-from waffle.contracts.layout.layout import Cell, Layout, Port
+from waffle.contracts.layout.layout import Cell, Instance, InstanceArray, Layout, Port
 from waffle.geometry.services.grid import Rounding, round_fraction
 
 
@@ -52,8 +52,23 @@ def _scale_shape(shape: Polygon | Rectangle | Path, scale: _Scaler) -> Polygon |
             )
 
 
+def _scale_instance(instance: Instance, scale: _Scaler) -> Instance:
+    transform = instance.transform.model_copy(
+        update={"translation": scale.point(instance.transform.translation)}
+    )
+    array = instance.array
+    if array is not None:
+        array = InstanceArray(
+            columns=array.columns,
+            rows=array.rows,
+            column_step=scale.point(array.column_step),
+            row_step=scale.point(array.row_step),
+        )
+    return instance.model_copy(update={"transform": transform, "array": array})
+
+
 def _scale_cell(cell: Cell, scale: _Scaler) -> tuple[Cell, list[str]]:
-    """The rescaled cell, and a description of each shape or port that collapsed."""
+    """The rescaled cell, and a description of each item that collapsed."""
     collapsed: list[str] = []
     shapes: dict[str, tuple[Polygon | Rectangle | Path, ...]] = {}
     for layer, layer_shapes in cell.shapes.items():
@@ -78,28 +93,28 @@ def _scale_cell(cell: Cell, scale: _Scaler) -> tuple[Cell, list[str]]:
             )
         except ValidationError:
             collapsed.append(f"port {port.name!r}")
-    instances = tuple(
-        i.model_copy(
-            update={
-                "transform": i.transform.model_copy(
-                    update={"translation": scale.point(i.transform.translation)}
-                )
-            }
-        )
-        for i in cell.instances
+    instances: list[Instance] = []
+    for instance in cell.instances:
+        try:
+            instances.append(_scale_instance(instance, scale))
+        except ValidationError:
+            collapsed.append(f"array of instance {instance.name!r}")
+    return (
+        Cell(name=cell.name, shapes=shapes, instances=tuple(instances), ports=tuple(ports)),
+        collapsed,
     )
-    return Cell(name=cell.name, shapes=shapes, instances=instances, ports=tuple(ports)), collapsed
 
 
 def regrid(layout: Layout, grid: Grid, rounding: Rounding = Rounding.EXACT) -> Result[Layout]:
     """`layout` on `grid`, with every coordinate and length rescaled by the exact ratio of
     the database units. Names, orientations, hierarchy, and ports' identities are unchanged.
+    Array origins and steps are rescaled independently so the placements remain regular.
 
     Under EXACT, a value that does not land on the new grid is an error
     (`geometry.grid.off_grid`, one diagnostic per cell counting the offenders). Otherwise it
     is snapped under `rounding`, and each cell with snapped values gets a
-    `geometry.grid.snapped` warning with the worst error in picometres. A shape or port
-    that collapses (zero area or width) is `geometry.grid.degenerate`.
+    `geometry.grid.snapped` warning with the worst error among stored values in picometres.
+    A shape, port, or array step that collapses is `geometry.grid.degenerate`.
     """
     ratio = Fraction(layout.grid.dbu_pm, grid.dbu_pm)
     snapping = rounding is not Rounding.EXACT
