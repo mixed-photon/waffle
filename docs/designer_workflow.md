@@ -54,16 +54,17 @@ designer/bin/python -m waffle_example_mmi
 designer/bin/waffle reference --model analytic --store ./results-analytic
 ```
 
-The full straight-waveguide example runs a 2 µm TM reduced guide at 1550 nm.
-It publishes checked GDS and port metadata, analytic and selected experiment
-bindings, four simulation attempts, the forward sample and its numerical
-comparison, and two synthetic optical-power captures. Choose `simulated` for
-the qualified forward sample or `calibrated` to fit additional attenuation
-using the separate captures. Unsupported or unqualified results fail with
-diagnostics that identify the attempt or report.
+The straight-waveguide example uses a 2 µm TM reduced guide at 1550 nm.
+The `simulated` option runs ten isolated BeamZ attempts across both launches
+and publishes all four complex scattering responses when the numerical
+checks pass. The `calibrated` option runs the four-attempt forward recipe and
+fits attenuation for that forward response using separate synthetic fitting
+and validation captures. Both options publish checked GDS with port metadata
+and exact experiment bindings. Failed qualification retains the numerical
+evidence and reports its reference in the diagnostics.
 
 ```sh
-designer/bin/waffle reference --model calibrated --store ./results \
+designer/bin/waffle reference --model simulated --store ./results \
   --beamz-python "$demo_dir/solver/bin/python" > report.json
 ```
 
@@ -75,6 +76,10 @@ environment, its own Python is the default worker interpreter.
 The JSON report includes the exact design, layout, physics, model and mapping
 revisions and refers to artifacts in `results/artifacts`. The original worker
 inputs, logs, and completion status are in `results/workers/<attempt-id>`.
+For `simulated`, use `references.transfer` for the directional estimates and
+`references.validation` for the qualification report. The four published
+responses appear in `replayed_responses` with explicit output and excitation
+channels.
 Artifact references are printed as `kind@sha256:<digest>`. Use the exact
 `references.selected_binding` value to check integrity and reevaluate the
 persisted experiment. Replay uses the recorded evaluator version, conditions,

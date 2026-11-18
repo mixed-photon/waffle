@@ -88,7 +88,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="directory for attempts and immutable artifacts",
     )
     reference.add_argument(
-        "--model", choices=("analytic", "simulated", "calibrated"), default="analytic"
+        "--model",
+        choices=("analytic", "simulated", "calibrated"),
+        default="analytic",
+        help="analytic evaluation, qualified two-port simulation, or forward power calibration",
     )
     workers = reference.add_mutually_exclusive_group()
     workers.add_argument(

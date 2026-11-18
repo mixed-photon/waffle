@@ -21,25 +21,27 @@ acceptance criteria and the separate native and deployment tracks.
 | MOD-011 | Analysis requests, capability preflight, backend protocol and fake, progress/cancellation, typed acquisition extraction and completeness |
 | MOD-012 | Isolated BeamZ CPU worker, 2D reduced-index propagation, persisted attempts, cancellation and retries |
 | MOD-013 | GDSFactory waveguide and MMI layouts, traceable GDS, and analytic model binding |
-| MOD-014 | Exact-sample forward extraction, numerical qualification, and immutable sampled model evidence for the reference waveguide and MMI |
+| MOD-014 | Qualified exact-sample two-port waveguide and forward MMI responses, with immutable model evidence |
 | MOD-015 | Bounded optical-power JSON ingestion, exact specimen/design/mapping association, raw and processed artifact provenance |
 | MOD-016 | Bounded power attenuation fit with separate validation, comparison artifact and exact model revision |
 | MOD-017 | Independently installable synthetic demo PDK and two example wheels |
 | MOD-018 | Operation fingerprints, historical and dependency replay, concurrent publication and interrupted retry |
-| MOD-019 | Installed Python and CLI workflows, separate solver environment selection, reference and replay commands |
+| MOD-019 | Installed Python and CLI workflows, separate solver environment selection, and directional waveguide publication and replay |
 | MOD-020 | Recorded installed lifecycle, numerical evidence, and developer handoff |
 
 ## Verification
 
-The build and 162 fast test targets passed, including layer boundary tests.
-All ten explicit backend and numerical test targets also passed. Run those
+The build and 167 fast test targets passed, including layer boundary tests.
+All 11 explicit backend and numerical test targets also passed. Run those
 targets explicitly to keep the fast suite backend independent.
 
 ```sh
 bazel test //third_party/gdsfactory:all_backend_tests \
   //third_party/beamz:smoke_test //third_party/beamz:capability_spike_test \
   //third_party/beamz:adapter_test //validation/demo_distribution:reference_test \
-  //validation/beamz_characterization:real_test //validation/mmi_characterization:real_test
+  //validation/beamz_characterization:real_test \
+  //validation/beamz_characterization:directional_benchmark_test \
+  //validation/mmi_characterization:real_test
 ```
 
 The smoke tests still check the declared backend environments. Propagation,
@@ -50,15 +52,15 @@ follow the [installation walkthrough](../designer_workflow.md).
 ## Supported bounds
 
 The verified numerical result is a single 1550 nm TM sample for each synthetic
-2D device. Only the tested forward pairs are published. Full scattering matrices,
-broadband interpolation, 3D qualification and instrument validation remain
-outside this release. Power calibration uses synthetic captures and retains the
-simulated phase. Installed platform verification covers Python 3.13 on macOS
-arm64 and in a Debian Linux arm64 container.
+2D device. The simulated waveguide exposes all four two-port responses, and the
+MMI exposes two forward responses. Broadband interpolation, 3D qualification,
+and instrument validation remain open. Power calibration uses synthetic
+captures and retains the simulated phase. Installed platform verification
+covers Python 3.13 on macOS arm64 and in a Debian Linux arm64 container.
 Native engines, automatic cache reuse and large-deployment execution remain
 future work.
 
 The [directional waveguide benchmark](../waveguide_characterization.md#bidirectional-benchmark)
 tests both launches at the same exact wavelength with three meshes and separate
-duration, boundary, and modal-window controls. Its four complex estimates and
-validation evidence are available separately from the 0.1.0 release model.
+duration, boundary, and modal-window controls. The installed reference workflow
+publishes its four complex estimates with pinned validation evidence.

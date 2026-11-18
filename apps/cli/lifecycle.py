@@ -26,6 +26,7 @@ from waffle.contracts.foundation.records import Record, revision_of
 from waffle.contracts.foundation.result import Result
 from waffle.contracts.foundation.units import Quantity
 from waffle.contracts.mappings.mapping import ViewMapping
+from waffle.contracts.models.capability import OpticalScattering
 from waffle.contracts.models.model import EvaluatorPayload, ModelRevision
 from waffle.contracts.physics.approximations import Polarization
 from waffle.contracts.results.artifact import ArtifactRef
@@ -47,7 +48,13 @@ from waffle.models.evaluate import (
     evaluate_optical_scattering,
 )
 from waffle.simulation.common.backend import CancellationToken
-from waffle.simulation.photonics.characterization import mmi, publication, recipe
+from waffle.simulation.photonics.characterization import (
+    directional_publication,
+    directional_recipe,
+    mmi,
+    publication,
+    recipe,
+)
 
 if TYPE_CHECKING:
     from waffle_pdk_demo import ReferenceComponent
@@ -108,6 +115,8 @@ def _evaluator(
 ) -> tuple[tuple[str, str], OpticalEvaluator]:
     if isinstance(payload := model.payload, EvaluatorPayload):
         key = (payload.name, payload.version)
+        if key == directional_publication.EVALUATOR_KEY:
+            return key, directional_publication.sample_evaluator(store, model)
         if key == publication.EVALUATOR_KEY:
             return key, publication.sample_evaluator(store, model)
         if key == mmi.EVALUATOR_KEY:
@@ -185,6 +194,7 @@ def _binding(
     snapshots: tuple[Record, ...],
     diagnostics: list[Diagnostic],
 ) -> ArtifactRef:
+    assert isinstance(model.capability, OpticalScattering)
     chosen = revision_of(model)
     resolved = resolve_binding(
         EntityId("experiment_binding", f"waveguide_{choice}"),
@@ -196,7 +206,7 @@ def _binding(
         {"device": (device.model, model)},
         {revision_of(device.model): device.mapping, chosen: mapping},
         {"device": operating},
-        {"device": (_PAIR,)},
+        {"device": model.capability.observed_channels},
         selected={"device": chosen},
     )
     if resolved.binding is None:
@@ -329,15 +339,39 @@ def run_reference(
         if choice != "analytic":
             assert worker_command is not None
             try:
-                characterized = recipe.characterize_waveguide(
-                    device.problem,
-                    model,
-                    mapping,
-                    command=worker_command,
-                    root=root / "workers",
-                    store=store,
-                    cancellation=cancellation,
-                )
+                if choice == "simulated":
+                    directional = directional_recipe.run_directional_benchmark(
+                        device.problem,
+                        command=worker_command,
+                        root=root / "workers",
+                        store=store,
+                        cancellation=cancellation,
+                    )
+                    published = directional_publication.publish_directional_waveguide(
+                        store,
+                        model,
+                        mapping,
+                        directional.report,
+                        directional.summary,
+                        responses=directional.responses,
+                    )
+                    selected_mapping = published.mapping
+                    validation_report = directional.report
+                    executions = directional.executions
+                else:
+                    characterized = recipe.characterize_waveguide(
+                        device.problem,
+                        model,
+                        mapping,
+                        command=worker_command,
+                        root=root / "workers",
+                        store=store,
+                        cancellation=cancellation,
+                    )
+                    published = characterized.publication
+                    selected_mapping = characterized.mapping
+                    validation_report = characterized.report
+                    executions = characterized.executions
             except ValueError as exc:
                 raise ArtifactError(
                     _error(
@@ -346,10 +380,9 @@ def run_reference(
                         str(device.problem.id),
                     )
                 ) from exc
-            published = characterized.publication
             if (
                 published.model is None
-                or characterized.mapping is None
+                or selected_mapping is None
                 or published.model_artifact is None
             ):
                 raise ArtifactError(
@@ -359,7 +392,7 @@ def run_reference(
                         str(device.problem.id),
                     )
                 )
-            model, mapping = published.model, characterized.mapping
+            model, mapping = published.model, selected_mapping
             references.update(
                 transfer=published.evidence,
                 validation=published.validation,
@@ -367,9 +400,9 @@ def run_reference(
             )
             comparisons = [
                 item.model_dump(mode="json")
-                for item in characterized.report.comparisons
+                for item in validation_report.comparisons
             ]
-            attempts = [execution.attempt_id for execution in characterized.executions]
+            attempts = [execution.attempt_id for execution in executions]
             evaluator_key, evaluator = _evaluator(store, model)
             evaluated = _require(
                 evaluate_optical_scattering(
@@ -464,7 +497,7 @@ def run_reference(
         }
         operation = OperationInfo(
             name="reference.waveguide",
-            version="1",
+            version="2" if choice == "simulated" else "1",
             parameters_digest=content_hash(
                 {"choice": choice, "wavelength_pm": _WAVELENGTH_PM}
             ),

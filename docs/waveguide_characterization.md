@@ -1,8 +1,9 @@
 # Bounded uniform waveguide characterization
 
-The implementation targets MOD-014's first bounded case: one forward coherent
-transfer between two reference planes in a uniform straight waveguide. It does
-not claim MMI support, a full S matrix, reverse propagation, or reflections.
+MOD-014 includes two recipes for the uniform straight waveguide. The directional
+recipe publishes all four two-port scattering responses at one exact sample.
+The original forward recipe supplies the sample for synthetic attenuation
+calibration and supports the historical forward-sample bindings.
 
 `//waffle/simulation/photonics/characterization:waveguide` exports
 `extract_profile_ratio`. Inputs are complex arrays with axes `(frequency,
@@ -82,14 +83,17 @@ reflection reference is zero, so reflection phase has no analytic comparison.
 bazel test //validation/beamz_characterization:directional_benchmark_test
 ```
 
-The test writes the report, exact worker references, and fitted estimates to
-`test.outputs/directional.json`, and publishes the same evidence in its
-artifact store. The directional benchmark is separate from the 0.1.0
-published model and its historical replay. The benchmark covers a single
-frequency of a uniform 2D guide. It supplies no fabricated-device or
-interpolation validation.
+The test runs `waffle reference --model simulated` and checks exact replay of
+all four coefficients from the selected experiment binding. The workflow
+publishes the fitted estimates and exact worker references as
+`waveguide_directional_transfer`, followed by the validation report and, when
+the checks pass, an executable model revision and its pinned port mapping.
+The test also writes the numerical summary to `test.outputs/directional.json`.
+The model uses the `waffle.waveguide.directional.samples` evaluator at version
+`1` and covers one exact sample of the uniform 2D guide. Interpolation and
+fabricated-device validation remain future work.
 
-On macOS arm64, all 48 comparisons passed across the ten BeamZ worker runs.
+In the original macOS arm64 benchmark, all 48 comparisons passed across ten BeamZ worker runs.
 The 12.5 nm mesh gave transmission magnitudes of 1.0000193 and 1.0000186
 and a maximum reflection amplitude of 0.0000151. The transmission phase
 disagreed with the slab reference by at most 0.00597 rad and changed by at

@@ -4,11 +4,12 @@ Versioned component and model foundation for photonic design: device definitions
 theoretical models, layout, physical simulation, compact models, and measurements.
 GDSFactory and BeamZ are optional backends behind Waffle-owned interfaces.
 
-The local 0.1.0 release runs a reference waveguide from GDSFactory layout through
-isolated BeamZ simulation, a validated forward sample, synthetic power calibration,
-and exact experiment replay. The MMI characterization publishes two qualified
-forward responses. The demo PDK and analytic examples install as separate
-wheels. See the [installed workflow](docs/designer_workflow.md),
+The local reference workflow runs a waveguide from GDSFactory layout through
+isolated BeamZ simulation and exact experiment replay. It publishes a qualified
+two-port scattering matrix at 1550 nm TM and offers a separate forward-sample
+workflow for synthetic power calibration. The MMI characterization publishes
+two qualified forward responses. The demo PDK and analytic examples install as
+separate wheels. See the [installed workflow](docs/designer_workflow.md),
 [lifecycle evidence](docs/lifecycle_report.md), and [milestone status](docs/plan/progress.md).
 
 ```sh

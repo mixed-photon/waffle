@@ -1,6 +1,52 @@
 load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
 waffle_py_library(name = "directional", srcs = ["directional.py"], visibility = ["//tools/visibility:simulation_consumers"], deps = ["//waffle/contracts/foundation:diagnostics", "//waffle/contracts/foundation:result", "@pip_core//numpy"])
 waffle_py_test(name = "directional_test", deps = [":directional", "@pip_core//numpy"])
+waffle_py_library(
+    name = "directional_recipe",
+    srcs = ["directional_recipe.py"],
+    visibility = ["//tools/visibility:simulation_consumers"],
+    deps = [
+        ":directional",
+        "//waffle/artifacts:store",
+        "//waffle/characterization/validation:compare",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/characterization:report",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/execution:worker",
+        "//waffle/simulation/common:backend",
+        "//waffle/simulation/photonics/device_analysis:slab",
+        "@pip_core//numpy",
+    ],
+)
+waffle_py_library(
+    name = "directional_publication",
+    srcs = ["directional_publication.py"],
+    visibility = ["//tools/visibility:simulation_consumers"],
+    deps = [
+        "//waffle/artifacts:store",
+        "//waffle/contracts/characterization:report",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:attempt",
+        "//waffle/contracts/results:provenance",
+        "//waffle/models:evaluate",
+        "@pip_core//pydantic",
+    ],
+)
+waffle_py_test(name = "directional_publication_test", deps = [":directional_publication", "//waffle/artifacts:local", "//waffle/artifacts:store", "//waffle/contracts/characterization:report", "//waffle/contracts/component:definition", "//waffle/contracts/component:parameters", "//waffle/contracts/foundation:canonical", "//waffle/contracts/foundation:records", "//waffle/contracts/foundation:units", "//waffle/contracts/mappings:mapping", "//waffle/contracts/models:model", "//waffle/contracts/results:provenance", "//waffle/models:evaluate"])
 waffle_py_library(name = "waveguide", srcs = ["waveguide.py"], visibility = ["//tools/visibility:simulation_consumers"], deps = ["//waffle/contracts/foundation:diagnostics", "//waffle/contracts/foundation:result", "@pip_core//numpy", "@pip_core//pydantic"])
 waffle_py_test(name = "waveguide_test", deps = [":waveguide", "@pip_core//numpy"])
 waffle_py_library(name = "validation", srcs = ["validation.py"], visibility = ["//tools/visibility:simulation_consumers"], deps = [":waveguide", "//waffle/characterization/validation:compare", "//waffle/contracts/characterization:report"])
