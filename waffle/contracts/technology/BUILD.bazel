@@ -1,0 +1,61 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:contracts_consumers"]
+
+waffle_py_library(
+    name = "versions",
+    srcs = ["versions.py"],
+    visibility = _VISIBILITY,
+)
+
+waffle_py_library(
+    name = "materials",
+    srcs = ["materials.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:units",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "revision",
+    srcs = ["revision.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":materials",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "pdk",
+    srcs = ["pdk.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":revision",
+        ":versions",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:records",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(name = "versions_test", deps = [":versions"])
+
+waffle_py_test(
+    name = "records_test",
+    deps = [
+        ":materials",
+        ":pdk",
+        ":revision",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)

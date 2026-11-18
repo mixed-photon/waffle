@@ -1,0 +1,7 @@
+load("//tools:waffle.bzl", "waffle_py_library")
+
+waffle_py_library(
+    name = "waffle",
+    srcs = ["__init__.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+)

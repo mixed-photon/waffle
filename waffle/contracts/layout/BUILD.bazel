@@ -1,0 +1,42 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "layout",
+    srcs = ["layout.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "examples",
+    testonly = True,
+    srcs = ["examples.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        ":layout",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+    ],
+)
+
+waffle_py_test(
+    name = "layout_test",
+    deps = [
+        ":examples",
+        ":layout",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+    ],
+)

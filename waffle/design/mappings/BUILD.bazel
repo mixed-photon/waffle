@@ -1,0 +1,36 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "validate",
+    srcs = ["validate.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout:layout",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:problem",
+        "//waffle/layout/services:flatten",
+    ],
+)
+
+waffle_py_test(
+    name = "validate_test",
+    deps = [
+        ":validate",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout:layout",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+    ],
+)

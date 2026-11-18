@@ -1,0 +1,2 @@
+# Root package. Targets live in the packages that own them; see ARCHITECTURE.md.
+package(default_visibility = ["//visibility:private"])

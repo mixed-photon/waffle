@@ -1,0 +1,96 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:simulation_consumers"]
+
+waffle_py_library(
+    name = "analysis",
+    srcs = ["analysis.py"],
+    visibility = ["//tools/visibility:backend_interface_consumers"],  # isolated worker preflight
+    deps = [
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/simulation/common:backend",
+    ],
+)
+
+waffle_py_test(
+    name = "analysis_test",
+    deps = [
+        ":analysis",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/pdk/testing:synthetic",
+        "//waffle/simulation/common:backend",
+        "//waffle/simulation/common:examples",
+        "//waffle/simulation/common:fake_backend",
+        "//waffle/simulation/common:prepare",
+    ],
+)
+
+waffle_py_library(
+    name = "slab",
+    srcs = ["slab.py"],
+    visibility = _VISIBILITY,
+    deps = ["//waffle/contracts/physics:approximations"],
+)
+
+waffle_py_library(
+    name = "slab_reference",
+    testonly = True,
+    srcs = ["slab_reference.py"],
+    visibility = _VISIBILITY,
+    deps = ["//waffle/contracts/physics:approximations"],
+)
+
+waffle_py_library(
+    name = "reduction",
+    srcs = ["reduction.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":slab",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/technology:revision",
+        "//waffle/technology:materials",
+        "//waffle/technology:stack",
+    ],
+)
+
+waffle_py_test(
+    name = "slab_test",
+    deps = [
+        ":slab",
+        ":slab_reference",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/pdk/testing:synthetic",
+        "//waffle/technology:materials",
+        "@pip_core//numpy",
+    ],
+)
+
+waffle_py_test(
+    name = "reduction_test",
+    deps = [
+        ":reduction",
+        ":slab_reference",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:revision",
+        "//waffle/pdk/testing:synthetic",
+        "//waffle/technology:materials",
+    ],
+)

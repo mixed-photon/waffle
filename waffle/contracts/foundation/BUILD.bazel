@@ -1,0 +1,54 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:contracts_consumers"]
+
+waffle_py_library(
+    name = "canonical",
+    srcs = ["canonical.py"],
+    visibility = _VISIBILITY,
+)
+
+waffle_py_library(
+    name = "identity",
+    srcs = ["identity.py"],
+    visibility = _VISIBILITY,
+    deps = [":canonical"],
+)
+
+waffle_py_library(
+    name = "diagnostics",
+    srcs = ["diagnostics.py"],
+    visibility = _VISIBILITY,
+    deps = ["@pip_core//pydantic"],
+)
+
+waffle_py_test(name = "canonical_test", deps = [":canonical"])
+
+waffle_py_test(name = "identity_test", deps = [":identity", ":canonical"])
+
+waffle_py_test(name = "diagnostics_test", deps = [":diagnostics"])
+
+waffle_py_library(
+    name = "units",
+    srcs = ["units.py"],
+    visibility = _VISIBILITY,
+    deps = [":diagnostics", "@pip_core//pydantic"],
+)
+
+waffle_py_library(
+    name = "result",
+    srcs = ["result.py"],
+    visibility = _VISIBILITY,
+    deps = [":diagnostics"],
+)
+
+waffle_py_library(
+    name = "records",
+    srcs = ["records.py"],
+    visibility = _VISIBILITY,
+    deps = [":canonical", ":diagnostics", ":identity", ":result", "@pip_core//pydantic"],
+)
+
+waffle_py_test(name = "units_test", deps = [":units"])
+
+waffle_py_test(name = "records_test", deps = [":records", ":identity", ":result"])

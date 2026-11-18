@@ -1,0 +1,3 @@
+load("//tools:waffle.bzl", "waffle_py_test")
+
+waffle_py_test(name = "real_test", size = "large", timeout = "long", tags = ["manual", "backend"], data = ["//third_party/beamz:worker"], deps = ["//apps/cli:lifecycle", "//validation/demo_distribution:demo", "//waffle/artifacts:local", "//waffle/contracts/component:definition", "//waffle/contracts/component:design", "//waffle/contracts/foundation:identity", "//waffle/contracts/foundation:records", "//waffle/contracts/mappings:mapping", "//waffle/contracts/models:model", "//waffle/contracts/physics:approximations", "//waffle/experiments/bindings:resolve", "//waffle/experiments/bindings:store", "//waffle/models:evaluate", "//waffle/simulation/photonics/characterization:mmi"])

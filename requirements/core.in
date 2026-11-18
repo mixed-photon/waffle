@@ -1,0 +1,6 @@
+# pydantic is capped to the range gdsfactory/kfactory supports so that backend locks
+# can be resolved against this lock (-c) and share one pydantic version.
+pydantic>=2.13.4,<2.14
+pytest
+# numpy is shared with the backends; keep the range on the version their locks use.
+numpy>=2.5.5,<2.6

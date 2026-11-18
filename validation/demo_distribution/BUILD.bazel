@@ -1,0 +1,44 @@
+load("@rules_python//python:py_library.bzl", "py_library")
+load("//third_party/gdsfactory:defs.bzl", "gdsfactory_test")
+
+py_library(
+    name = "demo",
+    visibility = ["//validation:__subpackages__"],
+    srcs = ["//distributions/waffle-pdk-demo:src/waffle_pdk_demo/__init__.py"],
+    imports = ["../../distributions/waffle-pdk-demo/src"],
+    tags = ["manual"],
+    deps = [
+        "//waffle/artifacts:local",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/layout:layout",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:pdk",
+        "//waffle/contracts/technology:revision",
+        "//waffle/design/components:resolve",
+        "//waffle/design/mappings:validate",
+        "//waffle/experiments/bindings:resolve",
+        "//waffle/experiments/bindings:store",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/backend:packaging",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/layout/services:compare",
+        "//waffle/models:evaluate",
+        "//waffle/simulation/common:prepare",
+        "//waffle/simulation/common:request",
+        "//waffle/simulation/photonics/device_analysis:slab",
+        "//third_party/gdsfactory:backend",
+    ],
+)
+
+gdsfactory_test(name = "reference_test", deps = [":demo"])

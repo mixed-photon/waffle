@@ -1,0 +1,29 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "circuits",
+    srcs = ["circuits.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+    ],
+)
+
+waffle_py_test(
+    name = "circuits_test",
+    deps = [
+        ":circuits",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+    ],
+)

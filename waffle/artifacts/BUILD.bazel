@@ -1,0 +1,83 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:core_consumers"]
+
+waffle_py_library(
+    name = "store",
+    srcs = ["store.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:attempt",
+        "//waffle/contracts/results:provenance",
+        "@pip_core//numpy",
+    ],
+)
+
+waffle_py_library(
+    name = "local",
+    srcs = ["local.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":store",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:attempt",
+        "//waffle/contracts/results:provenance",
+        "@pip_core//numpy",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "lineage",
+    srcs = ["lineage.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":store",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:provenance",
+    ],
+)
+
+waffle_py_library(
+    name = "environment",
+    srcs = ["environment.py"],
+    visibility = _VISIBILITY,
+)
+
+waffle_py_test(
+    name = "local_test",
+    deps = [
+        ":local",
+        ":store",
+        ":environment",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:attempt",
+        "//waffle/contracts/results:provenance",
+        "@pip_core//numpy",
+    ],
+)
+
+waffle_py_test(
+    name = "lineage_test",
+    deps = [
+        ":lineage",
+        ":local",
+        ":store",
+        ":environment",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:provenance",
+        "@pip_core//numpy",
+    ],
+)
+
+waffle_py_test(name = "environment_test", deps = [":environment"])

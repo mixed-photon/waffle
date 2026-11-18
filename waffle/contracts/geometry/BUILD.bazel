@@ -1,0 +1,46 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:contracts_consumers"]
+
+waffle_py_library(
+    name = "grid",
+    srcs = ["grid.py"],
+    visibility = _VISIBILITY,
+    deps = ["@pip_core//pydantic"],
+)
+
+waffle_py_library(
+    name = "transform",
+    srcs = ["transform.py"],
+    visibility = _VISIBILITY,
+    deps = ["@pip_core//pydantic"],
+)
+
+waffle_py_library(
+    name = "shapes",
+    srcs = ["shapes.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":transform",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "unsupported",
+    srcs = ["unsupported.py"],
+    visibility = _VISIBILITY,
+    deps = ["//waffle/contracts/foundation:diagnostics"],
+)
+
+waffle_py_test(name = "transform_test", deps = [":transform"])
+
+waffle_py_test(name = "shapes_test", deps = [":shapes", ":transform"])
+
+waffle_py_test(
+    name = "unsupported_test",
+    deps = [
+        ":unsupported",
+        "//waffle/contracts/foundation:diagnostics",
+    ],
+)

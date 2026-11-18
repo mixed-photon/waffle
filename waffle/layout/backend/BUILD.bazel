@@ -1,0 +1,124 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+# Interface targets: implemented by adapters under //third_party, used by core and apps.
+_VISIBILITY = ["//tools/visibility:backend_interface_consumers"]
+
+waffle_py_library(
+    name = "interface",
+    srcs = ["interface.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/technology:revision",
+        "//waffle/layout/formats:sidecar",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "packaging",
+    srcs = ["packaging.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":interface",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout",
+        "//waffle/layout/formats:sidecar",
+    ],
+)
+
+waffle_py_library(
+    name = "fake",
+    testonly = True,
+    srcs = ["fake.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":interface",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/layout",
+        "//waffle/geometry/services:grid",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/layout/formats:testing",
+        "//waffle/layout/services:validate",
+    ],
+)
+
+waffle_py_library(
+    name = "conformance",
+    testonly = True,
+    srcs = ["conformance.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":interface",
+        ":packaging",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/layout:examples",
+        "//waffle/contracts/technology:revision",
+        "//waffle/geometry/services:shapes",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/layout/services:compare",
+        "//waffle/layout/services:validate",
+    ],
+)
+
+waffle_py_test(
+    name = "interface_test",
+    deps = [
+        ":fake",
+        ":interface",
+        ":packaging",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/layout:examples",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/technology:revision",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "fake_test",
+    deps = [
+        ":conformance",
+        ":fake",
+        ":interface",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/layout:examples",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)

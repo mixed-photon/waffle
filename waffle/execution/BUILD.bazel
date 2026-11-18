@@ -1,0 +1,44 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "protocol",
+    srcs = ["protocol.py"],
+    visibility = ["//tools/visibility:backend_interface_consumers"],
+    deps = [
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/physics:problem",
+        "//waffle/simulation/common:backend",
+        "@pip_core//numpy",
+        "@pip_core//pydantic",
+    ],
+)
+waffle_py_library(
+    name = "worker",
+    srcs = ["worker.py"],
+    visibility = ["//tools/visibility:backend_interface_consumers"],
+    deps = [
+        ":protocol",
+        "//waffle/artifacts:store",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:attempt",
+        "//waffle/contracts/results:provenance",
+        "//waffle/simulation/common:backend",
+    ],
+)
+waffle_py_test(
+    name = "worker_test",
+    deps = [
+        ":worker",
+        "//waffle/artifacts:local",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/physics:problem",
+        "@pip_core//numpy",
+    ],
+)

@@ -1,0 +1,30 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "power",
+    srcs = ["power.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/artifacts:store",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:dataset",
+        "//waffle/contracts/results:provenance",
+        "//waffle/experiments/measurements:ingest",
+        "//waffle/models:evaluate",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(name = "power_test", deps = [":power", "//waffle/artifacts:local", "//waffle/contracts/component:examples", "//waffle/contracts/foundation:identity", "//waffle/contracts/technology:materials"])

@@ -1,0 +1,17 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "binding",
+    srcs = ["binding.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/results:artifact",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(name = "binding_test", deps = [":binding", "//waffle/contracts/foundation:identity", "//waffle/contracts/foundation:records"])

@@ -1,0 +1,210 @@
+{
+  "image": "python:3.13-slim@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+  "python": "3.13.18",
+  "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
+  "gdsfactory": "9.51.0",
+  "result": {
+    "artifact": "reference_workflow@sha256:4bd1e8ff8e2e3472df43e4c245480e9ddae21f4c03514ec2b3041d59ca716983",
+    "schema_version": 1,
+    "model_choice": "calibrated",
+    "references": {
+      "gds": "layout_gds@sha256:32d18133139e77794bf3720046318816742aab765064cb222fb72d78c08d9bef",
+      "analytic_binding": "experiment_binding@sha256:2cb0d6fe4600b08089f08a5a4c508d8d52b8191d7c5d5ea6bfe891d9911d7c31",
+      "transfer": "waveguide_transfer@sha256:b08578f5316c46283529cb77f534c9aae9cede05bf88dc51225c531bba66bedb",
+      "validation": "validation_report@sha256:dcb353ebcfc6c16f715558ec9a180fcd85d67cf9b04f797fa1a01664d7cc5029",
+      "simulated_model": "model_revision@sha256:ac524be5b9515c09d7a73bf59ac5c823b89d6fb1c1fdfd0e1f3d022ff57c494c",
+      "fitting_data": "measurement_raw@sha256:8f26c794487c1c39de1f7db173c021f2683b7d3c21db83a4058188a9516d0cb8",
+      "validation_data": "measurement_raw@sha256:e532139552a6def36ef079d26e4932ac9838df394e5a89288426245152950434",
+      "calibration": "power_calibration@sha256:05b59cb69a337becb983d5df512e77528fb5f4d55690d0748c79bcc56333e7a7",
+      "selected_binding": "experiment_binding@sha256:c5145f294856d8e1a1d3f791ed1f88029d3cc8ed0f53c2366955ef2d9b54b335"
+    },
+    "design": "design:straight@sha256:d665e25f596891629a29e80c250f8fb6e908e6c34ab2cdf2367d62afc08116f7",
+    "technology": "technology:demo_strip@sha256:e23e2514f0183e31e2b3388bb4e5c4d7cac25ec436a8d24c2bd060bcd5d87124",
+    "layout": "layout:straight@sha256:62d02e7ec8c6436d6b6c91bfc3446746cfc855215de7f0fc2790eb1cd0a3b3a3",
+    "physics": "physical_problem:straight@sha256:0441bef56dc11c0a917d950bf7a62cb4811b3c9c4a5f7e4690ad5ee087bff61a",
+    "mapping": "view_mapping:straight@sha256:d4749b815243673b1c90a88b40c2e80372bcedc73de2cda466136b2b04de9b2c",
+    "model": "model:straight@sha256:e0c6b5d082c5eb8a8de0b01e1f3e3fac340a9afd4b7586f96ed27b40a2fa8fcb",
+    "wavelength_pm": 1550000,
+    "polarization": "tm",
+    "fit_dataset": "measurement_dataset:synthetic_fit@sha256:ead23d2812886b129b69098b7556c33a8ec4068a5418481d527172332168a28c",
+    "validation_dataset": "measurement_dataset:synthetic_check@sha256:cc7ceddbaf31b1d4e5b8abf32cfb656cab14ac52933ba576192608d86949a605",
+    "synthetic_measurements": true,
+    "power_gain": 0.7368628288117635,
+    "validation_power_error": 0.0040000000000000036,
+    "numerical_comparisons": [
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.028854536502671446,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.043744462701462955,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.005950708939865379,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.08057926624785518,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "additional_lateral_guided_mode",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0,
+        "tolerance": 0.0,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.009360339843966559,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.010958900317903692,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.03283366850331493,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.021768929435961017,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "backward_amplitude_fraction",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.024336173321975903,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "standing_wave_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.003434060348034087,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "modal_window_amplitude_difference",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0009180875243546271,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "modal_window_phase_difference",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0009456865963887207,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      }
+    ],
+    "worker_attempts": [
+      "20261118T025308Z-8147f253b517",
+      "20261118T025311Z-53ae1ad02a00",
+      "20261118T025314Z-0d236deeb161",
+      "20261118T025317Z-3496b65f5f8a"
+    ],
+    "analytic_responses": [
+      {
+        "instance": "device",
+        "model": "model:straight@sha256:38fa92048d4a8a429cd49969be839a925f97aa8ae472b22ef2124accbc4658d2",
+        "channels": [
+          {
+            "output": "o1",
+            "excitation": "o1",
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "output": "o1",
+            "excitation": "o2",
+            "real": -0.7427824728299799,
+            "imag": 0.6695328207463621
+          },
+          {
+            "output": "o2",
+            "excitation": "o1",
+            "real": -0.7427824728299799,
+            "imag": 0.6695328207463621
+          },
+          {
+            "output": "o2",
+            "excitation": "o2",
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ]
+      }
+    ],
+    "replayed_responses": [
+      {
+        "instance": "device",
+        "model": "model:straight@sha256:e0c6b5d082c5eb8a8de0b01e1f3e3fac340a9afd4b7586f96ed27b40a2fa8fcb",
+        "channels": [
+          {
+            "output": "o2",
+            "excitation": "o1",
+            "real": -0.6812386812039861,
+            "imag": 0.5620621489047752
+          }
+        ]
+      }
+    ]
+  },
+  "replay": {
+    "binding": "experiment_binding@sha256:c5145f294856d8e1a1d3f791ed1f88029d3cc8ed0f53c2366955ef2d9b54b335",
+    "responses": [
+      {
+        "instance": "device",
+        "model": "model:straight@sha256:e0c6b5d082c5eb8a8de0b01e1f3e3fac340a9afd4b7586f96ed27b40a2fa8fcb",
+        "channels": [
+          {
+            "output": "o2",
+            "excitation": "o1",
+            "real": -0.6812386812039861,
+            "imag": 0.5620621489047752
+          }
+        ]
+      }
+    ]
+  }
+}

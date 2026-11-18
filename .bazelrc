@@ -1,0 +1,10 @@
+common --enable_bzlmod
+common --lockfile_mode=update
+
+test --test_output=errors
+test --test_summary=short
+
+# Backend smoke tests are tagged `backend` and `manual`: wildcards such as
+# //... skip them, and they run only when named explicitly.
+
+try-import %workspace%/user.bazelrc

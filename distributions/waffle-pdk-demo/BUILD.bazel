@@ -1,0 +1,1 @@
+exports_files(["src/waffle_pdk_demo/__init__.py"], visibility = ["//validation/demo_distribution:__pkg__"])

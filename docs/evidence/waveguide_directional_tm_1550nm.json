@@ -1,0 +1,710 @@
+{
+  "passed": true,
+  "frequency_hz": 193414489032258.06,
+  "analytic_index": 1.8470165586465652,
+  "analytic_transmission": [
+    -0.742782472829981,
+    0.6695328207463608
+  ],
+  "settings": {
+    "fine": {
+      "spacing_pm": 12500,
+      "time_step_as": 25,
+      "steps": 12000,
+      "pml_pm": 1500000
+    },
+    "medium": {
+      "spacing_pm": 20000,
+      "time_step_as": 25,
+      "steps": 12000,
+      "pml_pm": 1500000
+    },
+    "coarse": {
+      "spacing_pm": 25000,
+      "time_step_as": 25,
+      "steps": 12000,
+      "pml_pm": 1500000
+    },
+    "duration": {
+      "spacing_pm": 12500,
+      "time_step_as": 25,
+      "steps": 8000,
+      "pml_pm": 1500000
+    },
+    "boundary": {
+      "spacing_pm": 12500,
+      "time_step_as": 25,
+      "steps": 12000,
+      "pml_pm": 1000000
+    }
+  },
+  "runs": {
+    "fine": [
+      {
+        "artifact": "simulation_fields@sha256:2d1b42960e17c9de540ea5abdfb193b95ab37c3eeeb5a3593fcd655590d4790d",
+        "attempt_id": "20261118T025043Z-55265b48dc1b"
+      },
+      {
+        "artifact": "simulation_fields@sha256:cb0657c2690d57e9b551ae64516f818281b80508373c132b2850766842d20523",
+        "attempt_id": "20261118T025057Z-aac50756fe10"
+      }
+    ],
+    "medium": [
+      {
+        "artifact": "simulation_fields@sha256:84fa60731545180d68c92f7a460fb37c52361b800ffd11196ff8b6888e5b526a",
+        "attempt_id": "20261118T025110Z-11c7d833eb69"
+      },
+      {
+        "artifact": "simulation_fields@sha256:34acf8dc822ca9a94e47ebb072e18f93d2b58f70765e9bf75d6f6e820806e3c5",
+        "attempt_id": "20261118T025117Z-5e01fd9295ba"
+      }
+    ],
+    "coarse": [
+      {
+        "artifact": "simulation_fields@sha256:8ea054a3523b8667155588a54011c4cac2f6a6193005b60fb304c512888ef6f8",
+        "attempt_id": "20261118T025124Z-08a4c4a825d5"
+      },
+      {
+        "artifact": "simulation_fields@sha256:3a256e70c8a98b51f0734ea4a8d4d379f2fd736af1c699bca737027839f241f1",
+        "attempt_id": "20261118T025130Z-8195be313d38"
+      }
+    ],
+    "duration": [
+      {
+        "artifact": "simulation_fields@sha256:69ab85ecabec597f54e4d365d96ea9487cb631d17ed2a64ccb8087bc3b692f84",
+        "attempt_id": "20261118T025135Z-536b053017ad"
+      },
+      {
+        "artifact": "simulation_fields@sha256:33e51ce508bb0cb1341ab4b29d53c9cadfd36c8be9532c8de36d2930b4f6c57f",
+        "attempt_id": "20261118T025144Z-0f0f91bacf93"
+      }
+    ],
+    "boundary": [
+      {
+        "artifact": "simulation_fields@sha256:44e31c8c9e57f53822a4f2a24b6b93c1784e9b5608920f33bafcfaf287f137b2",
+        "attempt_id": "20261118T025153Z-cfd4ce173720"
+      },
+      {
+        "artifact": "simulation_fields@sha256:c7b3c2c13cb1b86449c55d80223a62c46ddaf3b938612d774db3c30e313ca742",
+        "attempt_id": "20261118T025205Z-2744d6e0fb8e"
+      }
+    ]
+  },
+  "estimates": {
+    "fine": {
+      "matrix": [
+        [
+          [
+            7.635606171495515e-06,
+            1.2938603583703851e-05
+          ],
+          [
+            -0.7467750390863215,
+            0.6651057636482801
+          ]
+        ],
+        [
+          [
+            -0.7467745895105611,
+            0.6651052507790246
+          ],
+          [
+            6.985516278077006e-06,
+            1.3193286362077472e-05
+          ]
+        ]
+      ],
+      "incident_condition": 1.0054981298340455,
+      "fitted_indices": [
+        1.8476768670662813,
+        1.8476768670662813
+      ],
+      "left_launch_total_field_ratio_magnitude": 1.0020604270470561
+    },
+    "medium": {
+      "matrix": [
+        [
+          [
+            6.683273991137253e-05,
+            5.9326927955098356e-05
+          ],
+          [
+            -0.7549296776729256,
+            0.6559794865864489
+          ]
+        ],
+        [
+          [
+            -0.7549179552509819,
+            0.6559964781780829
+          ],
+          [
+            4.947104886378437e-05,
+            8.665853669301876e-05
+          ]
+        ]
+      ],
+      "incident_condition": 1.0056093801535753,
+      "fitted_indices": [
+        1.8485634350144313,
+        1.8485588174730347
+      ],
+      "left_launch_total_field_ratio_magnitude": 1.0019218727897223
+    },
+    "coarse": {
+      "matrix": [
+        [
+          [
+            3.2698697694716594e-05,
+            3.743249069244673e-05
+          ],
+          [
+            -0.7598410002912006,
+            0.6502020135847829
+          ]
+        ],
+        [
+          [
+            -0.7598409290264164,
+            0.6502020279566506
+          ],
+          [
+            3.167533234037898e-05,
+            3.7147998615346816e-05
+          ]
+        ]
+      ],
+      "incident_condition": 1.0057742644657268,
+      "fitted_indices": [
+        1.8499163746436404,
+        1.8499163746436404
+      ],
+      "left_launch_total_field_ratio_magnitude": 1.0016557175325211
+    },
+    "duration": {
+      "matrix": [
+        [
+          [
+            8.262487643812952e-06,
+            -1.576082515721268e-05
+          ],
+          [
+            -0.7467763349714184,
+            0.6651061176847541
+          ]
+        ],
+        [
+          [
+            -0.7467758681093243,
+            0.6651059761863588
+          ],
+          [
+            1.2184453883798534e-05,
+            -1.4802989014352643e-05
+          ]
+        ]
+      ],
+      "incident_condition": 1.0000413117940508,
+      "fitted_indices": [
+        1.8476768670662813,
+        1.8476768670662813
+      ],
+      "left_launch_total_field_ratio_magnitude": 0.9999892651151439
+    },
+    "boundary": {
+      "matrix": [
+        [
+          [
+            -1.934155041669857e-05,
+            -2.313010662048064e-06
+          ],
+          [
+            -0.7466834236171611,
+            0.6651799195744116
+          ]
+        ],
+        [
+          [
+            -0.7466837175601719,
+            0.6651795444648333
+          ],
+          [
+            -1.92048424343472e-05,
+            -2.8081259324758456e-06
+          ]
+        ]
+      ],
+      "incident_condition": 1.0555919853606488,
+      "fitted_indices": [
+        1.847704572314661,
+        1.847704572314661
+      ],
+      "left_launch_total_field_ratio_magnitude": 0.9862291108667002
+    },
+    "window": {
+      "matrix": [
+        [
+          [
+            -3.684419268261903e-05,
+            6.561701659153117e-05
+          ],
+          [
+            -0.747007399928734,
+            0.6650763418737704
+          ]
+        ],
+        [
+          [
+            -0.747007126341261,
+            0.6650757375906983
+          ],
+          [
+            -3.736695251196112e-05,
+            6.59925006359939e-05
+          ]
+        ]
+      ],
+      "incident_condition": 1.0055617782339765,
+      "fitted_indices": [
+        1.8476537793592984,
+        1.8476537793592984
+      ],
+      "left_launch_total_field_ratio_magnitude": 1.0022518146540127
+    }
+  },
+  "report": {
+    "kind": "validation_report",
+    "schema_version": 1,
+    "id": "validation_report:directional_waveguide",
+    "metadata": {},
+    "procedure": "uniform_guide_directional_two_port",
+    "procedure_version": "1",
+    "reference_description": "Lossless symmetric single-mode lateral slab, equal power normalization at both ports, zero reflection",
+    "inputs": [
+      "physical_problem:straight@sha256:0441bef56dc11c0a917d950bf7a62cb4811b3c9c4a5f7e4690ad5ee087bff61a",
+      "simulation_fields@sha256:2d1b42960e17c9de540ea5abdfb193b95ab37c3eeeb5a3593fcd655590d4790d",
+      "simulation_fields@sha256:cb0657c2690d57e9b551ae64516f818281b80508373c132b2850766842d20523",
+      "simulation_fields@sha256:84fa60731545180d68c92f7a460fb37c52361b800ffd11196ff8b6888e5b526a",
+      "simulation_fields@sha256:34acf8dc822ca9a94e47ebb072e18f93d2b58f70765e9bf75d6f6e820806e3c5",
+      "simulation_fields@sha256:8ea054a3523b8667155588a54011c4cac2f6a6193005b60fb304c512888ef6f8",
+      "simulation_fields@sha256:3a256e70c8a98b51f0734ea4a8d4d379f2fd736af1c699bca737027839f241f1",
+      "simulation_fields@sha256:69ab85ecabec597f54e4d365d96ea9487cb631d17ed2a64ccb8087bc3b692f84",
+      "simulation_fields@sha256:33e51ce508bb0cb1341ab4b29d53c9cadfd36c8be9532c8de36d2930b4f6c57f",
+      "simulation_fields@sha256:44e31c8c9e57f53822a4f2a24b6b93c1784e9b5608920f33bafcfaf287f137b2",
+      "simulation_fields@sha256:c7b3c2c13cb1b86449c55d80223a62c46ddaf3b938612d774db3c30e313ca742"
+    ],
+    "comparisons": [
+      {
+        "quantity": "fine.relative_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00010527739770462068,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "fine.power_norm_excess",
+        "frequency_hz": 193414489032258.06,
+        "error": 4.44608626355425e-05,
+        "tolerance": 0.001,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "fine.reciprocity_error",
+        "frequency_hz": 193414489032258.06,
+        "error": 6.820214348414003e-07,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "fine.reflection_magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.5023646172032092e-05,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "medium.relative_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0010774760488295677,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "medium.power_norm_excess",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00024262686070120054,
+        "tolerance": 0.001,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "medium.reciprocity_error",
+        "frequency_hz": 193414489032258.06,
+        "error": 2.064290101909178e-05,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "medium.reflection_magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 9.978520259767085e-05,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "coarse.relative_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0004462309496902068,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "coarse.power_norm_excess",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.000121940048535496,
+        "tolerance": 0.001,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "coarse.reciprocity_error",
+        "frequency_hz": 193414489032258.06,
+        "error": 7.269951888422239e-08,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "coarse.reflection_magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 4.970308029056725e-05,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "duration.relative_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00010571902486596357,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "duration.power_norm_excess",
+        "frequency_hz": 193414489032258.06,
+        "error": 7.63548896181021e-05,
+        "tolerance": 0.001,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "duration.reciprocity_error",
+        "frequency_hz": 193414489032258.06,
+        "error": 4.878339992097262e-07,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "duration.reflection_magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.917262110942211e-05,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "boundary.relative_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0002109777597106745,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "boundary.power_norm_excess",
+        "frequency_hz": 193414489032258.06,
+        "error": 2.5807885713158285e-05,
+        "tolerance": 0.001,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "boundary.reciprocity_error",
+        "frequency_hz": 193414489032258.06,
+        "error": 4.765602683119397e-07,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "boundary.reflection_magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.94793632042847e-05,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "window.relative_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0007511900086030301,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "window.power_norm_excess",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0004889634118807606,
+        "tolerance": 0.001,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "window.reciprocity_error",
+        "frequency_hz": 193414489032258.06,
+        "error": 6.633310912798596e-07,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "window.reflection_magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 7.583732115668916e-05,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "slab.s12.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.9317733682133742e-05,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "slab.s12.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.005961414715815527,
+        "tolerance": 0.035,
+        "unit": "rad",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "coarse.s12.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 4.1182532796169014e-05,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "coarse.s12.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.01981971032591578,
+        "tolerance": 0.03,
+        "unit": "rad",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "medium.s12.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 9.46283012528415e-05,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "medium.s12.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.012237647662142854,
+        "tolerance": 0.02,
+        "unit": "rad",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "duration.s12.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.2031832790082575e-06,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "duration.s12.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 5.974912417555308e-07,
+        "tolerance": 0.015,
+        "unit": "rad",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "boundary.s12.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.9087478875690067e-05,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "boundary.s12.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00011630949785820044,
+        "tolerance": 0.015,
+        "unit": "rad",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "window.s12.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.000153965287057245,
+        "tolerance": 0.002,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "window.s12.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00017648199210493058,
+        "tolerance": 0.01,
+        "unit": "rad",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "slab.s21.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.864090250658368e-05,
+        "tolerance": 0.005,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "slab.s21.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.005961498695156646,
+        "tolerance": 0.035,
+        "unit": "rad",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "coarse.s21.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 4.1814561396291694e-05,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "coarse.s21.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.019819569096659096,
+        "tolerance": 0.03,
+        "unit": "rad",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "medium.s21.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 9.760161251826105e-05,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "medium.s21.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.012217051279668675,
+        "tolerance": 0.02,
+        "unit": "rad",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "duration.s21.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.4372705490206528e-06,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "duration.s21.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 3.086750350863526e-07,
+        "tolerance": 0.015,
+        "unit": "rad",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "boundary.s21.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 1.8440680565667833e-05,
+        "tolerance": 0.004,
+        "unit": "1",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "boundary.s21.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00011591786431165276,
+        "tolerance": 0.015,
+        "unit": "rad",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "window.s21.magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00015403595706464657,
+        "tolerance": 0.002,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "window.s21.wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.00017666736694081926,
+        "tolerance": 0.01,
+        "unit": "rad",
+        "comparison": "analytic_reference"
+      }
+    ],
+    "observed_channels": [
+      [
+        "o1",
+        "o1"
+      ],
+      [
+        "o1",
+        "o2"
+      ],
+      [
+        "o2",
+        "o1"
+      ],
+      [
+        "o2",
+        "o2"
+      ]
+    ],
+    "uncomputed_channels": [],
+    "limitations": [
+      "Only the 2D reduced-index 1550 nm TM benchmark at the pinned endpoint planes.",
+      "Boundary sensitivity and residual modal/radiation contamination remain numerical error.",
+      "Reflection phase is not compared to a zero analytic amplitude. No interpolation or experimental validation.",
+      "These estimates qualify the benchmark only. No replacement release model is published."
+    ],
+    "interpolation": "none_exact_samples"
+  },
+  "artifact": "waveguide_benchmark@sha256:29bc722629248937056c92d4c6d6b02961d436ce520587926b8f180e035fb402"
+}

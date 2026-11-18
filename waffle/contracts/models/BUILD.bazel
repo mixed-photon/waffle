@@ -1,0 +1,39 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "capability",
+    srcs = ["capability.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = ["//waffle/contracts/foundation:units", "@pip_core//pydantic"],
+)
+
+waffle_py_test(name = "capability_test", deps = [":capability", "//waffle/contracts/foundation:units"])
+
+waffle_py_library(
+    name = "model",
+    srcs = ["model.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        ":capability",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/results:artifact",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(
+    name = "model_test",
+    deps = [
+        ":model",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/results:artifact",
+    ],
+)

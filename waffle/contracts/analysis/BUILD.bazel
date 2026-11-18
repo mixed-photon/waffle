@@ -1,0 +1,15 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "request",
+    srcs = ["request.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/physics:approximations",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(name = "request_test", deps = [":request", "//waffle/contracts/foundation:identity", "//waffle/contracts/foundation:records"])

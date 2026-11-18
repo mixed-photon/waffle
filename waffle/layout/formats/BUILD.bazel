@@ -1,0 +1,98 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+# Backend-neutral: adapters build and verify sidecars, so these are visible to them.
+_VISIBILITY = ["//tools/visibility:backend_interface_consumers"]
+
+waffle_py_library(
+    name = "gds_stream",
+    srcs = ["gds_stream.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+    ],
+)
+
+waffle_py_library(
+    name = "sidecar",
+    srcs = ["sidecar.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":gds_stream",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/layout",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "publish",
+    srcs = ["publish.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":sidecar",
+        "//waffle/artifacts:store",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:provenance",
+    ],
+)
+
+waffle_py_library(
+    name = "testing",
+    testonly = True,
+    srcs = ["testing.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/geometry/services:shapes",
+    ],
+)
+
+waffle_py_test(
+    name = "gds_stream_test",
+    deps = [
+        ":gds_stream",
+        ":testing",
+        "//waffle/contracts/layout:examples",
+    ],
+)
+
+waffle_py_test(
+    name = "sidecar_test",
+    deps = [
+        ":gds_stream",
+        ":sidecar",
+        ":testing",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/layout:examples",
+    ],
+)
+
+waffle_py_test(
+    name = "publish_test",
+    deps = [
+        ":publish",
+        ":sidecar",
+        ":testing",
+        "//waffle/artifacts:local",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/layout:examples",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:provenance",
+    ],
+)

@@ -1,0 +1,1 @@
+exports_files(["core.lock"], visibility = ["//:__subpackages__"])

@@ -1,0 +1,85 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:contracts_consumers"]
+
+waffle_py_library(
+    name = "parameters",
+    srcs = ["parameters.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:units",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "refs",
+    srcs = ["refs.py"],
+    visibility = _VISIBILITY,
+    deps = ["//waffle/contracts/foundation:records"],
+)
+
+waffle_py_library(
+    name = "definition",
+    srcs = ["definition.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":parameters",
+        ":refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/results:artifact",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "design",
+    srcs = ["design.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":parameters",
+        ":refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "examples",
+    testonly = True,
+    srcs = ["examples.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":definition",
+        ":design",
+        ":parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/results:artifact",
+    ],
+)
+
+waffle_py_test(
+    name = "parameters_test",
+    deps = [
+        ":parameters",
+        "//waffle/contracts/foundation:units",
+    ],
+)
+
+waffle_py_test(
+    name = "records_test",
+    deps = [
+        ":definition",
+        ":design",
+        ":examples",
+        ":parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/results:artifact",
+    ],
+)

@@ -1,0 +1,55 @@
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_library.bzl", "py_library")
+load("//tools:waffle.bzl", "waffle_py_test")
+
+# `bazel run //apps/cli:waffle -- doctor`
+py_binary(
+    name = "waffle",
+    srcs = ["main.py"],
+    main = "main.py",
+    visibility = ["//tools/visibility:apps_consumers"],
+    deps = [
+        ":lifecycle",
+        "//waffle",
+        "//waffle/artifacts:local",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/results:artifact",
+    ],
+)
+
+py_library(
+    name = "lifecycle",
+    srcs = ["lifecycle.py"],
+    visibility = ["//tools/visibility:apps_consumers"],
+    deps = [
+        "//waffle/artifacts:local",
+        "//waffle/artifacts:store",
+        "//waffle/characterization/calibration:power",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:dataset",
+        "//waffle/contracts/results:provenance",
+        "//waffle/experiments/bindings:resolve",
+        "//waffle/experiments/bindings:store",
+        "//waffle/experiments/measurements:ingest",
+        "//waffle/layout/formats:publish",
+        "//waffle/models:evaluate",
+        "//waffle/simulation/common:backend",
+        "//waffle/simulation/photonics/characterization:mmi",
+        "//waffle/simulation/photonics/characterization:publication",
+        "//waffle/simulation/photonics/characterization:recipe",
+    ],
+)
+
+waffle_py_test(name = "main_test", deps = [":waffle"])

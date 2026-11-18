@@ -1,0 +1,74 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+# Adapters convert upstream data with these (units, shapes, transforms).
+_VISIBILITY = ["//tools/visibility:backend_interface_consumers"]
+
+waffle_py_library(
+    name = "grid",
+    srcs = ["grid.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+    ],
+)
+
+waffle_py_library(
+    name = "shapes",
+    srcs = ["shapes.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/geometry:unsupported",
+    ],
+)
+
+waffle_py_library(
+    name = "transforms",
+    srcs = ["transforms.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":grid",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/geometry:unsupported",
+    ],
+)
+
+waffle_py_test(
+    name = "grid_test",
+    deps = [
+        ":grid",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+    ],
+)
+
+waffle_py_test(
+    name = "shapes_test",
+    deps = [
+        ":shapes",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+    ],
+)
+
+waffle_py_test(
+    name = "transforms_test",
+    deps = [
+        ":grid",
+        ":transforms",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:transform",
+    ],
+)

@@ -1,0 +1,176 @@
+{
+  "passed": true,
+  "backward_fraction": 0.02433617315002597,
+  "standing_wave_residual": 0.0034340603874937173,
+  "fitted_effective_index": 1.8492329785127535,
+  "model": "model_revision@sha256:13361ef67dba1b70dab2896f598dab29c6d76fd9cb43567e7f3955c3ee1d2a7e",
+  "evidence": "waveguide_transfer@sha256:f540026db5d5c3aa3505f0cc7beff76d2fca90b5ece04d4b63759ec7a36dfa81",
+  "validation": "validation_report@sha256:6b80fe2d268e8c02e0e8ea8281e26cc37c1e71cf4eb09463d4851a0c0207c05d",
+  "attempts": [
+    "20261118T002623Z-fc4fab8fe348",
+    "20261118T002627Z-9ba6a9223ec2",
+    "20261118T002629Z-e8fe8428d326",
+    "20261118T002633Z-df9f3e9788e2"
+  ],
+  "report": {
+    "kind": "validation_report",
+    "schema_version": 1,
+    "id": "validation_report:waveguide",
+    "metadata": {
+      "extraction": "modal_overlap_ratio_v1",
+      "modal_reference_index": "1.8470165586423828",
+      "fitted_effective_index": "1.8492329785127535",
+      "raw_profile_residual": "0.17863379096251028",
+      "integration_window_m": "3e-6",
+      "comparison_window_m": "2e-6",
+      "source_distance_m": "8e-6",
+      "common_plane_translation_m": "-1.6940658945086007e-21"
+    },
+    "procedure": "uniform_guide_exact_samples",
+    "procedure_version": "1",
+    "reference_description": "Symmetric lossless lateral slab te, n_eff=1.8470165586423828; scalar analytical reference v1; original endpoint planes",
+    "inputs": [
+      "physical_problem:straight@sha256:0441bef56dc11c0a917d950bf7a62cb4811b3c9c4a5f7e4690ad5ee087bff61a",
+      "simulation_fields@sha256:b633290576e6250c491af65dfe173bea484ff6cd0c208624717294a5539a3bdc",
+      "simulation_fields@sha256:b30f31803825cd669694ead6a6bfc8b21f98ede0157ccf26dd28ecf24d393680",
+      "simulation_fields@sha256:9e318bcf0c9bbcbeb2666ff22665f96789e67d9f317d96fdfcd0810b3770e7f1",
+      "simulation_fields@sha256:e2d52144c6f586af146e7d1d42b77ce534ce65e569ba593f7d882b2eaf78a0f9"
+    ],
+    "comparisons": [
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.02885453640899671,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.04374446205820815,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.005950709177881208,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.08057926623060248,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "grid_convergence"
+      },
+      {
+        "quantity": "additional_lateral_guided_mode",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0,
+        "tolerance": 0.0,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.009360339836456344,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.010958900322818639,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "time_convergence"
+      },
+      {
+        "quantity": "magnitude",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0328336684626358,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "wrapped_phase",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0217689288000238,
+        "tolerance": 0.15,
+        "unit": "rad",
+        "comparison": "boundary_convergence"
+      },
+      {
+        "quantity": "backward_amplitude_fraction",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.02433617315002597,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "standing_wave_fit_residual",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0034340603874937173,
+        "tolerance": 0.05,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "modal_window_amplitude_difference",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0009180875237755348,
+        "tolerance": 0.01,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      },
+      {
+        "quantity": "modal_window_phase_difference",
+        "frequency_hz": 193414489032258.06,
+        "error": 0.0009456865970567589,
+        "tolerance": 0.02,
+        "unit": "1",
+        "comparison": "analytic_reference"
+      }
+    ],
+    "observed_channels": [
+      [
+        "o2",
+        "o1"
+      ]
+    ],
+    "uncomputed_channels": [
+      [
+        "o1",
+        "o1"
+      ],
+      [
+        "o1",
+        "o2"
+      ],
+      [
+        "o2",
+        "o2"
+      ]
+    ],
+    "limitations": [
+      "Analysis-only uniform leads extend original rectangle through x PML; endpoint planes remain original design ports.",
+      "Analytic fundamental-mode projection v1: scalar lateral te; 3um transverse window checked against 2um; raw profile residual=0.17863379096251028, radiation remains unmodeled.",
+      "Forward/back fit optimizes beta over +/-15% with 1001 samples; this is a bounded diagnostic, not a general mode decomposition.",
+      "Only exact carrier sample and forward transfer tested; reverse/reflection matrix elements are uncomputed.",
+      "Two-grid/time/PML discrepancies are tested tolerances, not statistical uncertainty bounds."
+    ],
+    "interpolation": "none_exact_samples"
+  },
+  "observed_forward_real": -0.7936078860946866,
+  "observed_forward_imag": 0.6547733808102576
+}

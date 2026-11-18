@@ -1,0 +1,187 @@
+{
+  "artifact": "reference_workflow@sha256:d30040cccefa02948f33d04f45cee9ad51553a205bcda752d654ce8dc630bf19",
+  "schema_version": 1,
+  "model_choice": "calibrated",
+  "references": {
+    "gds": "layout_gds@sha256:32d18133139e77794bf3720046318816742aab765064cb222fb72d78c08d9bef",
+    "analytic_binding": "experiment_binding@sha256:2cb0d6fe4600b08089f08a5a4c508d8d52b8191d7c5d5ea6bfe891d9911d7c31",
+    "transfer": "waveguide_transfer@sha256:d1548e4f699be89c1082af7675b90b3f825993802b7fd59bb0e3c827493e1c3f",
+    "validation": "validation_report@sha256:b2c8e354c5719b047953b9986965f157d20981643fd84ae84da10ea9b5bb2328",
+    "simulated_model": "model_revision@sha256:80b1d49129e624f29d7fe6c2da037d76ad6316d6845b4814760314ab4235bfa4",
+    "fitting_data": "measurement_raw@sha256:29ae6484ae4eeeb6820bab996c7c8d32f50cf00157e741d2a519dcf6a3beb101",
+    "validation_data": "measurement_raw@sha256:6f54f894ebe2a618b1efe6714f02aabf4f923778069651288f7e6b8d166ca575",
+    "calibration": "power_calibration@sha256:6ad16d59808f8badd5eeeff46792d6ca55db81e730a87a2ff415c0e3309413ab",
+    "selected_binding": "experiment_binding@sha256:8f444d721536d52071ce297b26c87287595b9e335c44ec3e11f38b2510e21d70"
+  },
+  "design": "design:straight@sha256:d665e25f596891629a29e80c250f8fb6e908e6c34ab2cdf2367d62afc08116f7",
+  "technology": "technology:demo_strip@sha256:e23e2514f0183e31e2b3388bb4e5c4d7cac25ec436a8d24c2bd060bcd5d87124",
+  "layout": "layout:straight@sha256:62d02e7ec8c6436d6b6c91bfc3446746cfc855215de7f0fc2790eb1cd0a3b3a3",
+  "physics": "physical_problem:straight@sha256:0441bef56dc11c0a917d950bf7a62cb4811b3c9c4a5f7e4690ad5ee087bff61a",
+  "mapping": "view_mapping:straight@sha256:174d1284b06242fb4f123d966898345277d17c7fa78d29e4367d9c727f65ca8b",
+  "model": "model:straight@sha256:9a152481276d21e46e6b8474d000f39adb47a092616c3035ea10c28e39209864",
+  "wavelength_pm": 1550000,
+  "polarization": "tm",
+  "fit_dataset": "measurement_dataset:synthetic_fit@sha256:bef930c8a9528e294a1bbf1f57269cfc38d0d9ca1b5927f1b84cc008a43d9bfb",
+  "validation_dataset": "measurement_dataset:synthetic_check@sha256:267e4967e4b5f8f09fa669a4303f25818633e7c2bdbdd481ac6e04d3136ddc0e",
+  "synthetic_measurements": true,
+  "power_gain": 0.7368628289459425,
+  "validation_power_error": 0.0039999999999997815,
+  "numerical_comparisons": [
+    {
+      "quantity": "magnitude",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.02885453640899671,
+      "tolerance": 0.05,
+      "unit": "1",
+      "comparison": "analytic_reference"
+    },
+    {
+      "quantity": "wrapped_phase",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.04374446205820815,
+      "tolerance": 0.15,
+      "unit": "rad",
+      "comparison": "analytic_reference"
+    },
+    {
+      "quantity": "magnitude",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.005950709177881208,
+      "tolerance": 0.05,
+      "unit": "1",
+      "comparison": "grid_convergence"
+    },
+    {
+      "quantity": "wrapped_phase",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.08057926623060248,
+      "tolerance": 0.15,
+      "unit": "rad",
+      "comparison": "grid_convergence"
+    },
+    {
+      "quantity": "additional_lateral_guided_mode",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.0,
+      "tolerance": 0.0,
+      "unit": "1",
+      "comparison": "analytic_reference"
+    },
+    {
+      "quantity": "magnitude",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.009360339836456344,
+      "tolerance": 0.05,
+      "unit": "1",
+      "comparison": "time_convergence"
+    },
+    {
+      "quantity": "wrapped_phase",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.010958900322818639,
+      "tolerance": 0.15,
+      "unit": "rad",
+      "comparison": "time_convergence"
+    },
+    {
+      "quantity": "magnitude",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.0328336684626358,
+      "tolerance": 0.05,
+      "unit": "1",
+      "comparison": "boundary_convergence"
+    },
+    {
+      "quantity": "wrapped_phase",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.0217689288000238,
+      "tolerance": 0.15,
+      "unit": "rad",
+      "comparison": "boundary_convergence"
+    },
+    {
+      "quantity": "backward_amplitude_fraction",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.024336173150025887,
+      "tolerance": 0.05,
+      "unit": "1",
+      "comparison": "analytic_reference"
+    },
+    {
+      "quantity": "standing_wave_fit_residual",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.0034340603874937325,
+      "tolerance": 0.05,
+      "unit": "1",
+      "comparison": "analytic_reference"
+    },
+    {
+      "quantity": "modal_window_amplitude_difference",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.0009180875237755348,
+      "tolerance": 0.01,
+      "unit": "1",
+      "comparison": "analytic_reference"
+    },
+    {
+      "quantity": "modal_window_phase_difference",
+      "frequency_hz": 193414489032258.06,
+      "error": 0.0009456865970567589,
+      "tolerance": 0.02,
+      "unit": "1",
+      "comparison": "analytic_reference"
+    }
+  ],
+  "worker_attempts": [
+    "20261118T003838Z-67515c37eb21",
+    "20261118T003859Z-006883abab06",
+    "20261118T003902Z-40cf4b96bb05",
+    "20261118T003906Z-f9da7bece975"
+  ],
+  "analytic_responses": [
+    {
+      "instance": "device",
+      "model": "model:straight@sha256:38fa92048d4a8a429cd49969be839a925f97aa8ae472b22ef2124accbc4658d2",
+      "channels": [
+        {
+          "output": "o1",
+          "excitation": "o1",
+          "real": 0.0,
+          "imag": 0.0
+        },
+        {
+          "output": "o1",
+          "excitation": "o2",
+          "real": -0.7427824728299799,
+          "imag": 0.6695328207463621
+        },
+        {
+          "output": "o2",
+          "excitation": "o1",
+          "real": -0.7427824728299799,
+          "imag": 0.6695328207463621
+        },
+        {
+          "output": "o2",
+          "excitation": "o2",
+          "real": 0.0,
+          "imag": 0.0
+        }
+      ]
+    }
+  ],
+  "replayed_responses": [
+    {
+      "instance": "device",
+      "model": "model:straight@sha256:9a152481276d21e46e6b8474d000f39adb47a092616c3035ea10c28e39209864",
+      "channels": [
+        {
+          "output": "o2",
+          "excitation": "o1",
+          "real": -0.6812386808424371,
+          "imag": 0.5620621493429853
+        }
+      ]
+    }
+  ]
+}

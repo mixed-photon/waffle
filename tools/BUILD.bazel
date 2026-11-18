@@ -1,0 +1,19 @@
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load(":waffle.bzl", "waffle_py_test")
+
+exports_files(
+    ["pytest_main.py"],
+    visibility = ["//visibility:public"],
+)
+
+waffle_py_test(
+    name = "backend_isolation_test",
+    size = "small",
+)
+
+py_binary(
+    name = "release_wheels",
+    srcs = ["release_wheels.py"],
+    main = "release_wheels.py",
+    tags = ["manual"],  # Runs uv from the contributor's environment with bazel run.
+)

@@ -1,0 +1,15 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "mapping",
+    srcs = ["mapping.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:transform",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(name = "mapping_test", deps = [":mapping", "//waffle/contracts/foundation:identity", "//waffle/contracts/foundation:records"])

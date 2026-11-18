@@ -1,0 +1,38 @@
+"""Waffle: component, model, and simulation foundation."""
+
+module(name = "waffle", version = "0.1.0")
+
+bazel_dep(name = "rules_python", version = "2.5.1")
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
+
+PYTHON_VERSION = "3.13"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+
+# Runfiles do not get synthesized __init__.py files; namespace directories stay PEP 420.
+config = use_extension("@rules_python//python/extensions:config.bzl", "config")
+config.explicit_init_py(default = True)
+
+# One pip hub per lock file. Core targets may only use @pip_core; the backend
+# hubs are reachable solely through //third_party/<backend> (see ARCHITECTURE.md).
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pip_core",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//requirements:core.lock",
+)
+pip.parse(
+    hub_name = "pip_gdsfactory",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//third_party/gdsfactory:requirements.lock",
+)
+pip.parse(
+    hub_name = "pip_beamz",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//third_party/beamz:requirements.lock",
+)
+use_repo(pip, "pip_beamz", "pip_core", "pip_gdsfactory")

@@ -1,0 +1,107 @@
+"""Layer membership and per-layer consumer groups. See ARCHITECTURE.md.
+
+`layer_*` groups say which packages belong to a layer. `*_consumers` groups say
+who may depend on a layer; targets use them as their `visibility`. Core services
+are every //waffle package outside contracts and simulation.
+"""
+
+package(default_visibility = ["//visibility:private"])
+
+package_group(
+    name = "layer_contracts",
+    packages = ["//waffle/contracts/..."],
+)
+
+package_group(
+    name = "layer_core",
+    packages = [
+        "//waffle/...",
+        "-//waffle/contracts/...",
+        "-//waffle/simulation/...",
+    ],
+)
+
+package_group(
+    name = "layer_simulation",
+    packages = ["//waffle/simulation/..."],
+)
+
+package_group(
+    name = "layer_third_party",
+    packages = ["//third_party/..."],
+)
+
+package_group(
+    name = "layer_apps",
+    packages = ["//apps/..."],
+)
+
+package_group(
+    name = "layer_validation",
+    packages = ["//validation/..."],
+)
+
+# Contracts: usable by every layer.
+package_group(
+    name = "contracts_consumers",
+    includes = [
+        ":layer_apps",
+        ":layer_contracts",
+        ":layer_core",
+        ":layer_simulation",
+        ":layer_third_party",
+        ":layer_validation",
+    ],
+)
+
+# Core services: never by contracts or by third_party adapters.
+package_group(
+    name = "core_consumers",
+    includes = [
+        ":layer_apps",
+        ":layer_core",
+        ":layer_simulation",
+        ":layer_validation",
+    ],
+)
+
+package_group(
+    name = "simulation_consumers",
+    includes = [
+        ":layer_apps",
+        ":layer_simulation",
+        ":layer_validation",
+    ],
+)
+
+# Backend interfaces (protocols an adapter implements, e.g. a layout or solver
+# backend): defined in core or simulation, and additionally visible to adapters.
+# Use this instead of core_consumers/simulation_consumers for interface-only targets.
+package_group(
+    name = "backend_interface_consumers",
+    includes = [
+        ":layer_apps",
+        ":layer_core",
+        ":layer_simulation",
+        ":layer_third_party",
+        ":layer_validation",
+    ],
+)
+
+# Adapters: only application assembly, validation, and other adapters.
+package_group(
+    name = "third_party_consumers",
+    includes = [
+        ":layer_apps",
+        ":layer_third_party",
+        ":layer_validation",
+    ],
+)
+
+package_group(
+    name = "apps_consumers",
+    includes = [
+        ":layer_apps",
+        ":layer_validation",
+    ],
+)

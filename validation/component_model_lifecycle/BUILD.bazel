@@ -1,0 +1,20 @@
+load("//tools:waffle.bzl", "waffle_py_test")
+
+waffle_py_test(
+    name = "mapping_model_test",
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+        "//waffle/design/mappings:validate",
+        "//waffle/models:evaluate",
+        "//waffle/pdk/testing:synthetic",
+        "//waffle/simulation/common:examples",
+        "//waffle/simulation/common:prepare",
+    ],
+)

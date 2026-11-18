@@ -1,0 +1,159 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:core_consumers"]
+
+waffle_py_library(
+    name = "materials",
+    srcs = ["materials.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+        "@pip_core//numpy",
+    ],
+)
+
+waffle_py_library(
+    name = "validate",
+    srcs = ["validate.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:revision",
+    ],
+)
+
+waffle_py_library(
+    name = "mapping",
+    srcs = ["mapping.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/technology:revision",
+    ],
+)
+
+waffle_py_library(
+    name = "stack",
+    srcs = ["stack.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":validate",
+        "//waffle/contracts/technology:revision",
+    ],
+)
+
+waffle_py_library(
+    name = "fingerprint",
+    srcs = ["fingerprint.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:revision",
+    ],
+)
+
+waffle_py_library(
+    name = "requirements",
+    srcs = ["requirements.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/technology:revision",
+    ],
+)
+
+waffle_py_library(
+    name = "registry",
+    srcs = ["registry.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle:waffle",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/technology:pdk",
+        "//waffle/contracts/technology:revision",
+        "//waffle/pdk:directory",
+        "//waffle/pdk:validate",
+    ],
+)
+
+waffle_py_test(
+    name = "materials_test",
+    deps = [
+        ":materials",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+    ],
+)
+
+waffle_py_test(
+    name = "validate_test",
+    deps = [
+        ":validate",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:revision",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "mapping_test",
+    deps = [
+        ":mapping",
+        "//waffle/contracts/technology:revision",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "stack_test",
+    deps = [
+        ":stack",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "fingerprint_test",
+    deps = [
+        ":fingerprint",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:revision",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "requirements_test",
+    deps = [
+        ":requirements",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "registry_test",
+    deps = [
+        ":registry",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/pdk:directory",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)

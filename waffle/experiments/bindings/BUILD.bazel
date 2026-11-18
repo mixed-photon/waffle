@@ -1,0 +1,72 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "resolve",
+    srcs = ["resolve.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/experiments:binding",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+        "//waffle/models:applicability",
+    ],
+)
+
+waffle_py_library(
+    name = "store",
+    srcs = ["store.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/artifacts:store",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/experiments:binding",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout:layout",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/results:artifact",
+        "//waffle/contracts/results:dataset",
+        "//waffle/contracts/results:provenance",
+        "//waffle/contracts/technology:revision",
+        "//waffle/design/mappings:validate",
+        "//waffle/models:applicability",
+    ],
+)
+
+waffle_py_test(
+    name = "bindings_test",
+    deps = [
+        ":resolve",
+        ":store",
+        "//waffle/artifacts:local",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/experiments:binding",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/layout:layout",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/results:provenance",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)

@@ -1,0 +1,49 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:core_consumers"]
+
+waffle_py_library(
+    name = "validate",
+    srcs = ["validate.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/technology:pdk",
+        "//waffle/contracts/technology:versions",
+        "//waffle/technology:validate",
+    ],
+)
+
+waffle_py_library(
+    name = "directory",
+    srcs = ["directory.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":validate",
+        "//waffle:waffle",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/technology:pdk",
+        "//waffle/contracts/technology:revision",
+    ],
+)
+
+waffle_py_test(
+    name = "validate_test",
+    deps = [
+        ":validate",
+        "//waffle/contracts/foundation:records",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+waffle_py_test(
+    name = "directory_test",
+    deps = [
+        ":directory",
+        "//waffle/contracts/foundation:records",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)

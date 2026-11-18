@@ -1,0 +1,88 @@
+load("//tools:waffle.bzl", "waffle_py_test")
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_library.bzl", "py_library")
+
+exports_files(["requirements.lock"], visibility = ["//visibility:public"])  # read by pip.parse
+
+# The only route from Waffle code to the upstream package. Visibility keeps core
+# services out; the pip hub stays reachable only through this alias.
+alias(
+    name = "upstream",
+    actual = "@pip_beamz//beamz",
+    tags = ["manual"],
+    visibility = ["//tools/visibility:third_party_consumers"],
+)
+
+# Real-backend test: bazel test //third_party/beamz:smoke_test
+waffle_py_test(
+    name = "smoke_test",
+    size = "medium",
+    data = ["requirements.in"],
+    env = {"REQUIREMENTS_IN": "$(rootpath requirements.in)"},
+    pytest = "@pip_beamz//pytest",
+    tags = [
+        "backend",
+        "manual",
+    ],
+    deps = [":upstream"],
+)
+
+waffle_py_test(
+    name = "capability_spike_test",
+    size = "medium",
+    pytest = "@pip_beamz//pytest",
+    tags = ["backend", "manual"],
+    deps = [
+        ":upstream",
+        "@pip_beamz//numpy",
+    ],
+)
+
+
+py_library(
+    name = "adapter",
+    srcs = ["adapter.py"],
+    visibility = ["//tools/visibility:third_party_consumers"],
+    tags = ["manual"],
+    deps = [
+        ":upstream",
+        "//waffle/geometry/services:shapes",
+        "//waffle/contracts/foundation:canonical",
+        "@pip_beamz//numpy",
+        "@pip_beamz//jax",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/simulation/common:backend",
+        "//waffle/simulation/photonics/device_analysis:analysis",
+    ],
+)
+py_binary(
+    name = "worker",
+    srcs = ["worker.py"],
+    main = "worker.py",
+    visibility = ["//tools/visibility:third_party_consumers"],
+    tags = ["manual"],
+    deps = [
+        ":adapter",
+        "//waffle/execution:protocol",
+    ],
+)
+waffle_py_test(
+    name = "adapter_test",
+    data = [":worker"],
+    env = {"BEAMZ_WORKER": "$(rootpath :worker)"},
+    size = "medium",
+    tags = ["manual", "backend"],
+    pytest = "@pip_beamz//pytest",
+    deps = [
+        ":adapter",
+        "//waffle/execution:protocol",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/analysis:request",
+    ],
+)

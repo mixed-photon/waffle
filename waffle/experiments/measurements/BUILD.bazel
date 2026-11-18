@@ -1,0 +1,42 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "ingest",
+    srcs = ["ingest.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/artifacts:store",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/results:dataset",
+        "//waffle/contracts/results:provenance",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(
+    name = "ingest_test",
+    deps = [
+        ":ingest",
+        "//waffle/artifacts:lineage",
+        "//waffle/artifacts:local",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/results:dataset",
+        "//waffle/contracts/technology:materials",
+    ],
+)

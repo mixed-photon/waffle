@@ -1,0 +1,104 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:core_consumers"]
+
+# Adapters validate what they produce and compare layouts in their tests.
+_ADAPTER_VISIBILITY = ["//tools/visibility:backend_interface_consumers"]
+
+_CONTRACTS = [
+    "//waffle/contracts/component:definition",
+    "//waffle/contracts/foundation:diagnostics",
+    "//waffle/contracts/foundation:result",
+    "//waffle/contracts/geometry:grid",
+    "//waffle/contracts/geometry:shapes",
+    "//waffle/contracts/geometry:transform",
+    "//waffle/contracts/layout",
+]
+
+waffle_py_library(
+    name = "validate",
+    srcs = ["validate.py"],
+    visibility = _ADAPTER_VISIBILITY,
+    deps = _CONTRACTS + ["//waffle/geometry/services:shapes"],
+)
+
+waffle_py_library(
+    name = "cells",
+    srcs = ["cells.py"],
+    visibility = _VISIBILITY,
+    deps = _CONTRACTS,
+)
+
+waffle_py_library(
+    name = "flatten",
+    srcs = ["flatten.py"],
+    visibility = _ADAPTER_VISIBILITY,
+    deps = _CONTRACTS + [
+        ":cells",
+        ":validate",
+        "//waffle/geometry/services:shapes",
+    ],
+)
+
+waffle_py_library(
+    name = "physical",
+    srcs = ["physical.py"],
+    visibility = _VISIBILITY,
+    deps = _CONTRACTS + [
+        ":flatten",
+        "//waffle/geometry/services:grid",
+    ],
+)
+
+waffle_py_library(
+    name = "regrid",
+    srcs = ["regrid.py"],
+    visibility = _VISIBILITY,
+    deps = _CONTRACTS + [
+        "//waffle/geometry/services:grid",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "compare",
+    srcs = ["compare.py"],
+    visibility = _ADAPTER_VISIBILITY,
+    deps = _CONTRACTS + [
+        ":flatten",
+        ":validate",
+        "//waffle/geometry/services:shapes",
+    ],
+)
+
+_TEST_DEPS = _CONTRACTS + [
+    "//waffle/contracts/foundation:identity",
+    "//waffle/contracts/foundation:records",
+    "//waffle/contracts/layout:examples",
+]
+
+waffle_py_test(name = "validate_test", deps = [":validate"] + _TEST_DEPS)
+
+waffle_py_test(name = "cells_test", deps = [":cells", ":flatten"] + _TEST_DEPS)
+
+waffle_py_test(name = "flatten_test", deps = [":flatten", ":physical", ":cells"] + _TEST_DEPS)
+
+waffle_py_test(
+    name = "regrid_test",
+    deps = [
+        ":flatten",
+        ":physical",
+        ":regrid",
+        ":validate",
+        "//waffle/geometry/services:grid",
+    ] + _TEST_DEPS,
+)
+
+waffle_py_test(
+    name = "compare_test",
+    deps = [
+        ":compare",
+        ":regrid",
+        "//waffle/geometry/services:grid",
+    ] + _TEST_DEPS,
+)

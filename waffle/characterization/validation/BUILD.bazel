@@ -1,0 +1,3 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+waffle_py_library(name = "compare", srcs = ["compare.py"], visibility = ["//tools/visibility:core_consumers"], deps = ["//waffle/contracts/characterization:report"])
+waffle_py_test(name = "compare_test", deps = [":compare"])

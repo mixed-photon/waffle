@@ -1,0 +1,68 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+waffle_py_library(
+    name = "applicability",
+    srcs = ["applicability.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+    ],
+)
+
+waffle_py_test(
+    name = "applicability_test",
+    deps = [
+        ":applicability",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+    ],
+)
+
+waffle_py_library(
+    name = "evaluate",
+    srcs = ["evaluate.py"],
+    visibility = ["//tools/visibility:core_consumers"],
+    deps = [
+        ":applicability",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+    ],
+)
+
+waffle_py_test(
+    name = "evaluate_test",
+    deps = [
+        ":evaluate",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:capability",
+        "//waffle/contracts/models:model",
+    ],
+)

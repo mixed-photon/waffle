@@ -1,0 +1,18 @@
+load("//tools:waffle.bzl", "waffle_py_library")
+
+# Redistributable synthetic fixtures; not foundry data. Depends on contracts only, so
+# tests in any layer (including adapters) may use it.
+waffle_py_library(
+    name = "synthetic",
+    testonly = True,
+    srcs = ["synthetic.py"],
+    visibility = ["//tools/visibility:contracts_consumers"],
+    deps = [
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/technology:materials",
+        "//waffle/contracts/technology:pdk",
+        "//waffle/contracts/technology:revision",
+    ],
+)

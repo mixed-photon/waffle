@@ -1,0 +1,158 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:simulation_consumers"]
+
+waffle_py_library(
+    name = "backend",
+    srcs = ["backend.py"],
+    visibility = ["//tools/visibility:backend_interface_consumers"],
+    deps = [
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "@pip_core//numpy",
+    ],
+)
+
+waffle_py_library(
+    name = "fake_backend",
+    testonly = True,
+    srcs = ["fake_backend.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":backend",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+    ],
+)
+
+waffle_py_library(
+    name = "request",
+    srcs = ["request.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "ports",
+    srcs = ["ports.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/layout",
+    ],
+)
+
+waffle_py_library(
+    name = "prepare",
+    srcs = ["prepare.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":ports",
+        ":request",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/physics:approximations",
+        "//waffle/contracts/physics:problem",
+        "//waffle/contracts/technology:revision",
+        "//waffle/geometry/services:grid",
+        "//waffle/layout/services:flatten",
+        "//waffle/layout/services:validate",
+        "//waffle/simulation/photonics/device_analysis:reduction",
+        "//waffle/technology:mapping",
+        "//waffle/technology:validate",
+    ],
+)
+
+waffle_py_library(
+    name = "fingerprint",
+    srcs = ["fingerprint.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/physics:problem",
+    ],
+)
+
+waffle_py_library(
+    name = "examples",
+    testonly = True,
+    srcs = ["examples.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":request",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/physics:approximations",
+    ],
+)
+
+_TEST_DEPS = [
+    ":examples",
+    ":request",
+    "//waffle/contracts/foundation:diagnostics",
+    "//waffle/contracts/foundation:identity",
+    "//waffle/contracts/foundation:records",
+    "//waffle/contracts/foundation:units",
+    "//waffle/contracts/geometry:shapes",
+    "//waffle/contracts/layout",
+    "//waffle/contracts/physics:approximations",
+    "//waffle/contracts/physics:problem",
+    "//waffle/contracts/technology:materials",
+    "//waffle/contracts/technology:revision",
+    "//waffle/geometry/services:shapes",
+    "//waffle/pdk/testing:synthetic",
+]
+
+waffle_py_test(name = "ports_test", deps = [":ports"] + _TEST_DEPS)
+
+waffle_py_test(
+    name = "prepare_test",
+    deps = [
+        ":prepare",
+        ":fingerprint",
+        "//waffle/simulation/photonics/device_analysis:slab_reference",
+    ] + _TEST_DEPS,
+)
+
+
+waffle_py_test(name = "process_change_test", deps = [":prepare", ":fingerprint"] + _TEST_DEPS)
+
+waffle_py_library(
+    name = "run_fingerprint",
+    srcs = ["run_fingerprint.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":fingerprint",
+        "//waffle/contracts/analysis:request",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/mappings:mapping",
+        "//waffle/contracts/models:model",
+        "//waffle/contracts/physics:problem",
+    ],
+)

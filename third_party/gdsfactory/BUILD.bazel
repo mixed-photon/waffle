@@ -1,0 +1,246 @@
+load("@rules_python//python:py_library.bzl", "py_library")
+load(":defs.bzl", "gdsfactory_test")
+
+exports_files(["requirements.lock"], visibility = ["//visibility:public"])  # read by pip.parse
+
+_ADAPTER = ["//tools/visibility:third_party_consumers"]
+
+# The only route from Waffle code to the upstream package. Visibility keeps core
+# services out; the pip hub stays reachable only through this alias.
+alias(
+    name = "upstream",
+    actual = "@pip_gdsfactory//gdsfactory",
+    tags = ["manual"],
+    visibility = _ADAPTER,
+)
+
+# Adapter libraries depend on `:upstream`, so (like it) they are `manual`: a wildcard
+# build or test never fetches gdsfactory. They are plain py_library, not waffle_py_library,
+# because the boundary test would rightly reject a target that depends on a backend.
+
+py_library(
+    name = "session",
+    srcs = ["session.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [":upstream"],
+)
+
+py_library(
+    name = "gds",
+    srcs = ["gds.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [
+        ":upstream",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout",
+        "//waffle/geometry/services:shapes",
+        "//waffle/layout/backend:interface",
+    ],
+)
+
+py_library(
+    name = "convert",
+    srcs = ["convert.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [
+        ":gds",
+        ":upstream",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:unsupported",
+        "//waffle/contracts/layout",
+        "//waffle/geometry/services:transforms",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/services:validate",
+        "@pip_core//pydantic",
+    ],
+)
+
+py_library(
+    name = "generators",
+    srcs = ["generators.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [
+        ":upstream",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/technology:revision",
+        "//waffle/geometry/services:grid",
+        "//waffle/layout/backend:interface",
+    ],
+)
+
+py_library(
+    name = "geometry",
+    srcs = ["geometry.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [
+        ":convert",
+        ":gds",
+        ":upstream",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/layout",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/services:validate",
+    ],
+)
+
+py_library(
+    name = "backend",
+    srcs = ["backend.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [
+        ":convert",
+        ":gds",
+        ":generators",
+        ":geometry",
+        ":session",
+        ":upstream",
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:unsupported",
+        "//waffle/contracts/layout",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/formats:gds_stream",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/layout/services:validate",
+    ],
+)
+
+# Real-backend tests, collected in `all_backend_tests` (see defs.bzl):
+#   bazel test //third_party/gdsfactory:all_backend_tests
+gdsfactory_test(
+    name = "smoke_test",
+    data = ["requirements.in"],
+    env = {"REQUIREMENTS_IN": "$(rootpath requirements.in)"},
+    deps = [":upstream"],
+)
+
+py_library(
+    name = "fixtures",
+    testonly = True,
+    srcs = ["fixtures.py"],
+    tags = ["manual"],
+    visibility = _ADAPTER,
+    deps = [
+        ":backend",
+        ":convert",
+        ":generators",
+        ":session",
+        ":upstream",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/layout",
+        "//waffle/layout/backend:interface",
+        "//waffle/pdk/testing:synthetic",
+    ],
+)
+
+# The shared conformance cases (//waffle/layout/backend:conformance) run here against the
+# real library, in backend_test.py::test_conformance.
+gdsfactory_test(
+    name = "backend_test",
+    deps = [
+        ":backend",
+        ":fixtures",
+        ":upstream",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:design",
+        "//waffle/contracts/component:examples",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/layout:examples",
+        "//waffle/geometry/services:shapes",
+        "//waffle/layout/backend:conformance",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/backend:packaging",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/layout/services:compare",
+        "//waffle/layout/services:flatten",
+        "//waffle/layout/services:validate",
+    ],
+)
+
+gdsfactory_test(
+    name = "convert_test",
+    deps = [
+        ":backend",
+        ":convert",
+        ":fixtures",
+        ":gds",
+        ":generators",
+        ":upstream",
+        "//waffle/contracts/foundation:diagnostics",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:result",
+        "//waffle/contracts/geometry:grid",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/layout:examples",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/formats:testing",
+        "//waffle/layout/services:validate",
+    ],
+)
+
+# Imports core modules in a fresh interpreter, so it lists them as data-free deps.
+gdsfactory_test(
+    name = "session_test",
+    data = ["requirements.in"],
+    env = {"REQUIREMENTS_IN": "$(rootpath requirements.in)"},
+    deps = [
+        ":backend",
+        ":fixtures",
+        ":generators",
+        ":session",
+        ":upstream",
+        "//waffle/contracts/component:definition",
+        "//waffle/layout/backend:conformance",
+        "//waffle/layout/backend:fake",
+        "//waffle/layout/backend:interface",
+        "//waffle/layout/backend:packaging",
+        "//waffle/layout/formats:gds_stream",
+        "//waffle/layout/formats:publish",
+        "//waffle/layout/formats:sidecar",
+        "//waffle/layout/services:flatten",
+    ],
+)
+
+test_suite(
+    name = "all_backend_tests",
+    tags = ["manual"],
+    tests = [
+        ":backend_test",
+        ":convert_test",
+        ":session_test",
+        ":smoke_test",
+    ],
+)

@@ -1,0 +1,28 @@
+load("//tools:waffle.bzl", "waffle_py_test")
+
+waffle_py_test(name = "recovery_test", deps = [
+    "//waffle/artifacts:local",
+    "//waffle/contracts/analysis:request",
+    "//waffle/contracts/component:definition",
+    "//waffle/contracts/component:design",
+    "//waffle/contracts/component:parameters",
+    "//waffle/contracts/foundation:canonical",
+    "//waffle/contracts/foundation:identity",
+    "//waffle/contracts/foundation:records",
+    "//waffle/contracts/foundation:units",
+    "//waffle/contracts/layout:layout",
+    "//waffle/contracts/mappings:mapping",
+    "//waffle/contracts/models:capability",
+    "//waffle/contracts/models:model",
+    "//waffle/contracts/physics:problem",
+    "//waffle/contracts/results:artifact",
+    "//waffle/contracts/results:attempt",
+    "//waffle/contracts/results:provenance",
+    "//waffle/contracts/technology:revision",
+    "//waffle/experiments/bindings:resolve",
+    "//waffle/experiments/bindings:store",
+    "//waffle/pdk/testing:synthetic",
+    "//waffle/simulation/common:examples",
+    "//waffle/simulation/common:prepare",
+    "//waffle/simulation/common:run_fingerprint",
+])

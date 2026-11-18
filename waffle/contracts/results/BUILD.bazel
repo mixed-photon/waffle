@@ -1,0 +1,69 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:contracts_consumers"]
+
+waffle_py_library(
+    name = "artifact",
+    srcs = ["artifact.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/foundation:canonical",
+        "//waffle/contracts/foundation:identity",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "provenance",
+    srcs = ["provenance.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":artifact",
+        "//waffle/contracts/foundation:canonical",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "attempt",
+    srcs = ["attempt.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":artifact",
+        ":provenance",
+        "//waffle/contracts/foundation:diagnostics",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "dataset",
+    srcs = ["dataset.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":artifact",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(
+    name = "dataset_test",
+    deps = [
+        ":dataset",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+    ],
+)
+
+waffle_py_test(
+    name = "records_test",
+    deps = [
+        ":artifact",
+        ":attempt",
+        ":provenance",
+        "//waffle/contracts/foundation:identity",
+    ],
+)

@@ -1,0 +1,46 @@
+load("//tools:waffle.bzl", "waffle_py_library", "waffle_py_test")
+
+_VISIBILITY = ["//tools/visibility:contracts_consumers"]
+
+waffle_py_library(
+    name = "approximations",
+    srcs = ["approximations.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        "//waffle/contracts/component:parameters",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_library(
+    name = "problem",
+    srcs = ["problem.py"],
+    visibility = _VISIBILITY,
+    deps = [
+        ":approximations",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/component:parameters",
+        "//waffle/contracts/component:refs",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/geometry:transform",
+        "//waffle/contracts/layout",
+        "//waffle/contracts/technology:materials",
+        "@pip_core//pydantic",
+    ],
+)
+
+waffle_py_test(
+    name = "problem_test",
+    deps = [
+        ":approximations",
+        ":problem",
+        "//waffle/contracts/component:definition",
+        "//waffle/contracts/foundation:identity",
+        "//waffle/contracts/foundation:records",
+        "//waffle/contracts/foundation:units",
+        "//waffle/contracts/geometry:shapes",
+        "//waffle/contracts/technology:materials",
+        "@pip_core//pydantic",
+    ],
+)
